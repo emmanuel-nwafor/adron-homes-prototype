@@ -1,0 +1,354 @@
+{
+  "name": "Adron Homes Production AI Assistant & Lead Automation Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "adron-enquiry",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "node_webhook_enquiry",
+      "name": "1. Webhook - Lead Enquiry",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [100, 200]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "adron-subscribe",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "node_webhook_subscribe",
+      "name": "2. Webhook - VIP Subscription",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [100, 500]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "adron-chat",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "node_webhook_chat",
+      "name": "3. Webhook - AI Chatbot Query",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [100, 900]
+    },
+    {
+      "parameters": {
+        "sendTo": "sales@adronhomesproperties.com",
+        "subject": "=🚨 NEW CUSTOMER ENQUIRY: {{ $json.body.fullName }} - {{ $json.body.propertyTitle || 'General' }}",
+        "emailType": "html",
+        "message": "=<h2>🚨 New Adron Homes Customer Lead Enquiry</h2><p><strong>Full Name:</strong> {{ $json.body.fullName }}</p><p><strong>Phone:</strong> {{ $json.body.phone }}</p><p><strong>Email:</strong> {{ $json.body.email || 'N/A' }}</p><p><strong>Estate Title:</strong> {{ $json.body.propertyTitle || 'General Enquiry' }}</p><p><strong>Preferred Tour Inspection Date:</strong> {{ $json.body.preferredInspectionDate || 'Not specified' }}</p><p><strong>Question/Request:</strong> {{ $json.body.message || 'No additional question' }}</p><hr/><p><em>Recorded automatically via Adron Web Prototype API.</em></p>",
+        "options": {}
+      },
+      "id": "node_gmail_enquiry",
+      "name": "Gmail - Alert Sales Team",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2,
+      "position": [400, 150],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "gmail_credentials_id",
+          "name": "Adron Gmail Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "channel": "#leads-adron-sales",
+        "text": "=🚨 *NEW CUSTOMER ENQUIRY RECEIVED*\n*Name:* {{ $json.body.fullName }}\n*Phone:* {{ $json.body.phone }}\n*Email:* {{ $json.body.email || 'N/A' }}\n*Estate:* {{ $json.body.propertyTitle || 'General' }}\n*Inspection Tour Date:* {{ $json.body.preferredInspectionDate || 'Not specified' }}\n*Question:* {{ $json.body.message || 'None' }}",
+        "otherOptions": {}
+      },
+      "id": "node_slack_enquiry",
+      "name": "Slack - Notify #leads-adron-sales",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 1,
+      "position": [400, 280],
+      "credentials": {
+        "slackApi": {
+          "id": "slack_credentials_id",
+          "name": "Adron Slack Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "sheetId": "1_Adron_Enquiries_Master_Sheet_ID",
+        "range": "Enquiries!A:H",
+        "options": {},
+        "dataMode": "autoMapInputData"
+      },
+      "id": "node_gsheets_enquiry",
+      "name": "Google Sheets - Log Enquiries (Master Sheet 1)",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [400, 410],
+      "credentials": {
+        "googleSheetsOAuth2": {
+          "id": "google_sheets_credentials_id",
+          "name": "Adron Google Sheets Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "subscriptions@adronhomesproperties.com",
+        "subject": "=🎉 VIP ESTATE SUBSCRIPTION: {{ $json.body.title || '' }} {{ $json.body.fullName }} - {{ $json.body.propertyTitle }}",
+        "emailType": "html",
+        "message": "=<h2>🎉 VIP Estate Subscription Record</h2><p><strong>Subscriber:</strong> {{ $json.body.title || '' }} {{ $json.body.fullName }}</p><p><strong>Phone:</strong> {{ $json.body.phone }}</p><p><strong>Email:</strong> {{ $json.body.email }}</p><p><strong>Estate Subscribed:</strong> {{ $json.body.propertyTitle }}</p><p><strong>Referred by Marketer:</strong> {{ $json.body.referredByMarketer ? 'YES' : 'NO' }}</p><hr/><p><em>Transmitted to Adron Subscriptions Management.</em></p>",
+        "options": {}
+      },
+      "id": "node_gmail_subscribe",
+      "name": "Gmail - Alert VIP Subscriptions Team",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2,
+      "position": [400, 480],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "gmail_credentials_id",
+          "name": "Adron Gmail Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "channel": "#subscriptions-vip",
+        "text": "=🎉 *NEW ESTATE SUBSCRIPTION RECORDED*\n*Subscriber:* {{ $json.body.title || '' }} {{ $json.body.fullName }}\n*Phone:* {{ $json.body.phone }}\n*Email:* {{ $json.body.email }}\n*Estate:* {{ $json.body.propertyTitle }}\n*Referred by Marketer:* {{ $json.body.referredByMarketer ? 'YES' : 'NO' }}",
+        "otherOptions": {}
+      },
+      "id": "node_slack_subscribe",
+      "name": "Slack - Notify #subscriptions-vip",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 1,
+      "position": [400, 610],
+      "credentials": {
+        "slackApi": {
+          "id": "slack_credentials_id",
+          "name": "Adron Slack Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "sheetId": "2_Adron_Subscriptions_Master_Sheet_ID",
+        "range": "Subscriptions!A:H",
+        "options": {},
+        "dataMode": "autoMapInputData"
+      },
+      "id": "node_gsheets_subscribe",
+      "name": "Google Sheets - Log Subscriptions (SEPARATE Sheet 2)",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [400, 740],
+      "credentials": {
+        "googleSheetsOAuth2": {
+          "id": "google_sheets_credentials_id",
+          "name": "Adron Google Sheets Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-1.5-pro",
+        "options": {
+          "temperature": 0.3
+        }
+      },
+      "id": "node_gemini_model",
+      "name": "Google Gemini 1.5 Pro Model",
+      "type": "n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [300, 1150],
+      "credentials": {
+        "googlePalmApi": {
+          "id": "gemini_api_key_credentials",
+          "name": "Google Gemini API Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionId": "={{ $json.body.sessionId || 'session_adron' }}",
+        "sessionTTL": 3600
+      },
+      "id": "node_mongodb_memory",
+      "name": "MongoDB Chat Memory",
+      "type": "n8n-nodes-langchain.memoryMongoDbChat",
+      "typeVersion": 1,
+      "position": [450, 1150],
+      "credentials": {
+        "mongoDb": {
+          "id": "mongodb_atlas_credentials",
+          "name": "MongoDB Atlas Chat Memory"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "name": "search_properties_api",
+        "description": "Search Adron Homes properties catalog by maximum budget (maxPrice), location, state, or type. Returns array of properties matching budget with prices, C of O titles, specs, and image thumbnail URLs.",
+        "method": "GET",
+        "url": "http://localhost:3000/api/properties",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "maxPrice",
+              "value": "={{ $fromAI('maxPrice', 'Maximum budget in Naira, e.g. 15000000') }}"
+            },
+            {
+              "name": "state",
+              "value": "={{ $fromAI('state', 'State name if specified, e.g. Lagos, Ogun, Abuja') }}"
+            }
+          ]
+        }
+      },
+      "id": "node_http_search_tool",
+      "name": "HTTP Request Tool - Search Properties API",
+      "type": "n8n-nodes-langchain.toolHttpRequest",
+      "typeVersion": 1,
+      "position": [600, 1150]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.body.message }}",
+        "options": {
+          "systemMessage": "You are Adron AI, the executive real estate consultant for Adron Homes & Properties Nigeria.\n\nYour primary objective is to assist users in finding verified land plots and housing units matching their specific budget (e.g. ₦15 Million, ₦8 Million, ₦5 Million).\n\nINSTRUCTIONS:\n1. Whenever a user asks for properties within a budget or location, ALWAYS invoke the 'search_properties_api' tool passing the budget amount as maxPrice.\n2. When returning matching properties, format the response cleanly with markdown:\n   - Property Name & Location\n   - Outright / Promo Starting Price\n   - Title Document (e.g. C of O)\n   - Key Features (Gym, Security, Solar Lights)\n   - High-Res Image Thumbnail URL (include markdown image ![Property Image](url))\n3. Provide helpful advice on Adron's 36-month flexible payment plans and free site inspection tours."
+        }
+      },
+      "id": "node_ai_agent",
+      "name": "Adron AI Agent Workspace",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.6,
+      "position": [400, 900]
+    },
+    {
+      "parameters": {
+        "jsCode": "const agentOutput = $input.first().json.output || $input.first().json.text || 'Thank you for consulting Adron Homes!';\n\nreturn {\n  json: {\n    output: agentOutput,\n    suggestedActions: [\n      'Show Payment Plan Breakdown',\n      'Book Free Site Tour',\n      'Check C of O Titles'\n    ],\n    meta: {\n      engine: 'n8n Production Workflow',\n      llm: 'Google Gemini 1.5 Pro',\n      memory: 'MongoDB Atlas'\n    }\n  }\n};"
+      },
+      "id": "node_format_response",
+      "name": "Format JSON Chat Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [700, 900]
+    }
+  ],
+  "connections": {
+    "1. Webhook - Lead Enquiry": {
+      "main": [
+        [
+          {
+            "node": "Gmail - Alert Sales Team",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Slack - Notify #leads-adron-sales",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Google Sheets - Log Enquiries (Master Sheet 1)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "2. Webhook - VIP Subscription": {
+      "main": [
+        [
+          {
+            "node": "Gmail - Alert VIP Subscriptions Team",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Slack - Notify #subscriptions-vip",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Google Sheets - Log Subscriptions (SEPARATE Sheet 2)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "3. Webhook - AI Chatbot Query": {
+      "main": [
+        [
+          {
+            "node": "Adron AI Agent Workspace",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini 1.5 Pro Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Adron AI Agent Workspace",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MongoDB Chat Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "Adron AI Agent Workspace",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request Tool - Search Properties API": {
+      "ai_tool": [
+        [
+          {
+            "node": "Adron AI Agent Workspace",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Adron AI Agent Workspace": {
+      "main": [
+        [
+          {
+            "node": "Format JSON Chat Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "adron_prod_workflow_v1",
+  "meta": {
+    "templateId": "adron_homes_production_n8n_workflow",
+    "description": "Production-grade n8n workflow for Adron Homes: Gmail alerts, Slack notifications, separate Google Sheets logging for Enquiries vs Subscriptions, and Google Gemini AI Agent with MongoDB memory and HTTP property search API tool."
+  }
+}
