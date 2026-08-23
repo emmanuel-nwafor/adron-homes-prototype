@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Bot, X, Send, Sparkles, RefreshCw, ChevronDown, CheckCircle } from "lucide-react";
+import { Bot, X, Send, RefreshCw, ChevronDown } from "lucide-react";
 import { ChatMessage } from "@/types/property";
 
 interface ChatWidgetProps {
@@ -11,6 +11,7 @@ interface ChatWidgetProps {
 
 export function ChatWidget({ initialPropertyTitle, initialPropertyId }: ChatWidgetProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [sessionId, setSessionId] = useState<string>("");
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: "msg_welcome",
@@ -21,12 +22,22 @@ export function ChatWidget({ initialPropertyTitle, initialPropertyId }: ChatWidg
       timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       suggestedActions: initialPropertyTitle
         ? ["Show Payment Breakdown", "Book Inspection", "Title Verification"]
-        : ["Show Estates under ₦5M", "How Payment Plans Work", "Book Free Site Inspection"],
+        : ["Show Estates under ₦15M", "How Payment Plans Work", "Book Free Site Inspection"],
     },
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Generate unique real-time session ID per browser session
+  useEffect(() => {
+    let sid = sessionStorage.getItem("adron_chat_session_id");
+    if (!sid) {
+      sid = `session_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+      sessionStorage.setItem("adron_chat_session_id", sid);
+    }
+    setSessionId(sid);
+  }, []);
 
   useEffect(() => {
     if (isOpen) {
@@ -37,6 +48,8 @@ export function ChatWidget({ initialPropertyTitle, initialPropertyId }: ChatWidg
   const handleSend = async (textToSend?: string) => {
     const messageText = textToSend || input;
     if (!messageText.trim() || loading) return;
+
+    const activeSessionId = sessionId || `session_${Date.now()}`;
 
     const userMsg: ChatMessage = {
       id: `msg_user_${Date.now()}`,
@@ -55,7 +68,7 @@ export function ChatWidget({ initialPropertyTitle, initialPropertyId }: ChatWidg
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           message: messageText,
-          sessionId: "widget_session_123",
+          sessionId: activeSessionId,
           userContext: {
             propertyId: initialPropertyId,
             propertyTitle: initialPropertyTitle,
@@ -150,7 +163,7 @@ export function ChatWidget({ initialPropertyTitle, initialPropertyId }: ChatWidg
                       <button
                         key={i}
                         onClick={() => handleSend(action)}
-                        className="text-[11px] bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 px-2.5 py-1 rounded-full transition-colors text-left font-medium"
+                        className="text-[11px] bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 px-2.5 py-1 rounded-full transition-colors text-left font-medium cursor-pointer"
                       >
                         ⚡ {action}
                       </button>
@@ -189,7 +202,7 @@ export function ChatWidget({ initialPropertyTitle, initialPropertyId }: ChatWidg
               <button
                 type="submit"
                 disabled={loading || !input.trim()}
-                className="bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white p-2.5 rounded-xl transition-colors font-bold shadow-md shadow-emerald-600/20"
+                className="bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white p-2.5 rounded-xl transition-colors font-bold shadow-md shadow-emerald-600/20 cursor-pointer"
               >
                 <Send className="w-4 h-4" />
               </button>
@@ -201,7 +214,7 @@ export function ChatWidget({ initialPropertyTitle, initialPropertyId }: ChatWidg
       {/* Floating Trigger Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="group bg-emerald-600 hover:bg-emerald-700 text-white p-3.5 rounded-2xl shadow-xl shadow-emerald-600/30 font-bold flex items-center gap-2.5 transition-transform duration-200 hover:scale-105"
+        className="group bg-emerald-600 hover:bg-emerald-700 text-white p-3.5 rounded-2xl shadow-xl shadow-emerald-600/30 font-bold flex items-center gap-2.5 transition-transform duration-200 hover:scale-105 cursor-pointer"
       >
         <div className="relative">
           <Bot className="w-6 h-6" />

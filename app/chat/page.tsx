@@ -6,22 +6,19 @@ import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { ChatMessage, N8nChatPayload } from "@/types/property";
 import {
-  ArrowLeft,
   Bot,
-  CheckCircle2,
-  ChevronRight,
   Code2,
   Copy,
   MessageSquare,
   Plus,
   RefreshCw,
   Send,
-  Sparkles,
+  Terminal,
   User,
-  Zap,
 } from "lucide-react";
 
 export default function ChatPage() {
+  const [activeSessionId, setActiveSessionId] = useState<string>("");
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: "init_1",
@@ -30,7 +27,7 @@ export default function ChatPage() {
       timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       suggestedActions: [
         "What estates are in Shimawa?",
-        "Show estates under ₦5 Million",
+        "Show estates under ₦20 Million",
         "How does 36-month flexible payment work?",
         "Book a free site inspection",
       ],
@@ -38,9 +35,21 @@ export default function ChatPage() {
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [activeThread, setActiveThread] = useState("current_thread");
+  const [lastPayloadSent, setLastPayloadSent] = useState<N8nChatPayload | null>(null);
+  const [lastResponseMeta, setLastResponseMeta] = useState<any>(null);
+  const [showJsonInspector, setShowJsonInspector] = useState(false);
 
   const chatEndRef = useRef<HTMLDivElement>(null);
+
+  // Initialize real-time session ID per browser session
+  useEffect(() => {
+    let sid = sessionStorage.getItem("adron_chat_page_session_id");
+    if (!sid) {
+      sid = `session_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+      sessionStorage.setItem("adron_chat_page_session_id", sid);
+    }
+    setActiveSessionId(sid);
+  }, []);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -49,6 +58,8 @@ export default function ChatPage() {
   const handleSendMessage = async (customText?: string) => {
     const text = customText || input;
     if (!text.trim() || loading) return;
+
+    const currentSid = activeSessionId || `session_${Date.now()}`;
 
     const userMsg: ChatMessage = {
       id: `usr_${Date.now()}`,
@@ -63,9 +74,11 @@ export default function ChatPage() {
 
     const payload: N8nChatPayload = {
       message: text.trim(),
-      sessionId: activeThread,
-      userContext: { device: "Next.js ChatGPT Interface" },
+      sessionId: currentSid,
+      userContext: { device: "Next.js Chat Page" },
     };
+
+    setLastPayloadSent(payload);
 
     try {
       const res = await fetch("/api/chat", {
@@ -75,6 +88,7 @@ export default function ChatPage() {
       });
 
       const json = await res.json();
+      setLastResponseMeta(json.meta);
 
       if (json.success && json.data) {
         const assistantMsg: ChatMessage = {
@@ -105,17 +119,19 @@ export default function ChatPage() {
 
       {/* ChatGPT Layout Workspace */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full grid grid-cols-1 md:grid-cols-12 gap-6 h-[calc(100vh-140px)] min-h-[600px]">
-        {/* Left Sidebar (ChatGPT Thread History & Prompt Templates) */}
+        {/* Left Sidebar */}
         <div className="hidden md:flex md:col-span-4 lg:col-span-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-4 flex-col justify-between shadow-sm">
           <div className="space-y-4">
             <button
               onClick={() => {
-                setActiveThread(`thread_${Date.now()}`);
+                const newSid = `session_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+                sessionStorage.setItem("adron_chat_page_session_id", newSid);
+                setActiveSessionId(newSid);
                 setMessages([
                   {
                     id: `new_${Date.now()}`,
                     sender: "assistant",
-                    text: "New conversation started! How can I assist you with Adron Estates?",
+                    text: "New real-time conversation session started! How can I assist you with Adron Estates?",
                     timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
                     suggestedActions: ["Show Featured Estates", "Book Free Tour"],
                   },
@@ -123,7 +139,7 @@ export default function ChatPage() {
               }}
               className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs py-3 px-4 rounded-2xl transition-all shadow-md shadow-emerald-600/20 flex items-center justify-center gap-2 font-aclonica cursor-pointer"
             >
-              <Plus className="w-4 h-4" /> New Chat
+              <Plus className="w-4 h-4" /> New Chat Session
             </button>
 
             <div className="space-y-1">
@@ -131,9 +147,11 @@ export default function ChatPage() {
               {savedThreads.map((t) => (
                 <button
                   key={t.id}
-                  onClick={() => setActiveThread(t.id)}
+                  onClick={() => {
+                    setActiveSessionId(`session_${t.id}`);
+                  }}
                   className={`w-full p-2.5 rounded-xl text-left text-xs font-semibold flex items-center justify-between transition-colors ${
-                    activeThread === t.id
+                    activeSessionId.includes(t.id)
                       ? "bg-zinc-100 dark:bg-zinc-800 text-emerald-600 dark:text-emerald-400"
                       : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800/60"
                   }`}
@@ -149,10 +167,10 @@ export default function ChatPage() {
 
           <div className="pt-4 border-t border-zinc-200 dark:border-zinc-800 flex items-center justify-between text-xs text-zinc-500">
             <span className="flex items-center gap-1.5 font-semibold text-zinc-700 dark:text-zinc-300">
-              <User className="w-4 h-4 text-emerald-600" /> Adron Client
+              <User className="w-4 h-4 text-emerald-600" /> Real-time Session
             </span>
             <span className="text-[10px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded font-mono font-bold">
-              AI Connected
+              Active
             </span>
           </div>
         </div>
@@ -167,16 +185,45 @@ export default function ChatPage() {
               </div>
               <div>
                 <h3 className="font-bold text-sm text-zinc-950 dark:text-white font-aclonica">Adron AI Consultant</h3>
-                <p className="text-[11px] text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" /> Real-time Real Estate Assistance
+                <p className="text-[11px] text-emerald-600 dark:text-emerald-400 flex items-center gap-1 font-mono">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
+                  Session: {activeSessionId ? activeSessionId.substring(0, 18) : "Connecting..."}
                 </p>
               </div>
             </div>
 
-            <Link href="/properties" className="text-xs text-emerald-600 dark:text-emerald-400 font-bold hover:underline">
-              Browse Estates Catalog &rarr;
-            </Link>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setShowJsonInspector(!showJsonInspector)}
+                className="text-xs text-zinc-500 hover:text-zinc-900 dark:hover:text-white flex items-center gap-1 font-mono"
+              >
+                <Code2 className="w-4 h-4" /> {showJsonInspector ? "Hide Payload" : "Inspect Payload"}
+              </button>
+              <Link href="/properties" className="text-xs text-emerald-600 dark:text-emerald-400 font-bold hover:underline">
+                Browse Estates &rarr;
+              </Link>
+            </div>
           </div>
+
+          {/* JSON Inspector Panel (Collapsible) */}
+          {showJsonInspector && (
+            <div className="bg-zinc-950 text-emerald-400 p-4 border-b border-zinc-800 font-mono text-xs space-y-2 animate-in slide-in-from-top-2">
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-white flex items-center gap-1.5">
+                  <Terminal className="w-4 h-4 text-emerald-400" /> Active Webhook Target:
+                </span>
+                <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded">
+                  {lastResponseMeta?.n8nUrl || process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL || "https://emstack.onrender.com/webhook/ccfa55ae-10d2-41a7-b582-bd2c646036c7"}
+                </span>
+              </div>
+              <div>
+                <span className="text-zinc-400 block mb-1">Last Outgoing JSON Body:</span>
+                <pre className="bg-zinc-900 p-2.5 rounded border border-zinc-800 text-[11px] overflow-x-auto">
+                  {lastPayloadSent ? JSON.stringify(lastPayloadSent, null, 2) : "// Awaiting user input..."}
+                </pre>
+              </div>
+            </div>
+          )}
 
           {/* Message Stream */}
           <div className="flex-1 p-6 overflow-y-auto space-y-6 bg-zinc-50/50 dark:bg-zinc-950/40">
@@ -256,7 +303,7 @@ export default function ChatPage() {
             </form>
 
             <p className="text-[10px] text-zinc-400 text-center">
-              Adron AI Assistant provides verified estate information & live site inspection bookings.
+              Adron AI Assistant provides verified real-time estate data & live site inspection bookings.
             </p>
           </div>
         </div>
