@@ -170,7 +170,7 @@ export default function ChatPage() {
               <User className="w-4 h-4 text-emerald-600" /> Real-time Session
             </span>
             <span className="text-[10px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded font-mono font-bold">
-              Active
+              Test Mode
             </span>
           </div>
         </div>
@@ -212,8 +212,8 @@ export default function ChatPage() {
                 <span className="font-bold text-white flex items-center gap-1.5">
                   <Terminal className="w-4 h-4 text-emerald-400" /> Active Webhook Target:
                 </span>
-                <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded">
-                  {lastResponseMeta?.n8nUrl || process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL || "https://emstack.onrender.com/webhook/ccfa55ae-10d2-41a7-b582-bd2c646036c7"}
+                <span className="text-[10px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded">
+                  {lastResponseMeta?.n8nUrl || process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL || "https://emstack.onrender.com/webhook-test/ccfa55ae-10d2-41a7-b582-bd2c646036c7"}
                 </span>
               </div>
               <div>
@@ -271,7 +271,7 @@ export default function ChatPage() {
             {loading && (
               <div className="flex items-center gap-3 text-xs text-emerald-600 dark:text-emerald-400 bg-white dark:bg-zinc-800 p-3 rounded-2xl border border-zinc-200 dark:border-zinc-700 w-fit shadow-sm">
                 <RefreshCw className="w-4 h-4 animate-spin" />
-                <span>Adron AI Consultant is thinking...</span>
+                <span>Dispatching payload to Test Webhook...</span>
               </div>
             )}
             <div ref={chatEndRef} />
@@ -303,7 +303,7 @@ export default function ChatPage() {
             </form>
 
             <p className="text-[10px] text-zinc-400 text-center">
-              Adron AI Assistant provides verified real-time estate data & live site inspection bookings.
+              Target Webhook: <code className="text-emerald-500 font-mono">https://emstack.onrender.com/webhook-test/ccfa55ae-10d2-41a7-b582-bd2c646036c7</code>
             </p>
           </div>
         </div>

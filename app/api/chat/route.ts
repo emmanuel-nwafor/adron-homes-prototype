@@ -1,38 +1,31 @@
 import { NextResponse } from "next/server";
-import { processUserChatMessage } from "@/lib/services/chatService";
-import { N8nChatPayload } from "@/types/property";
+import { processChatRequest } from "@/lib/services/chatService";
 
 export async function POST(request: Request) {
   try {
-    const body: N8nChatPayload = await request.json();
+    const body = await request.json();
 
-    if (!body.message || typeof body.message !== "string" || body.message.trim() === "") {
-      return NextResponse.json(
-        { error: "Message content is required" },
-        { status: 400 }
-      );
-    }
+    console.log("--------------------------------------------------");
+    console.log("📩 [/api/chat API ROUTE] Incoming Request Body:");
+    console.log(JSON.stringify(body, null, 2));
 
-    const payload: N8nChatPayload = {
-      message: body.message.trim(),
-      sessionId: body.sessionId || `session_${Date.now()}`,
-      userContext: body.userContext,
-    };
+    const result = await processChatRequest(body);
 
-    const result = await processUserChatMessage(payload);
+    console.log("📤 [/api/chat API ROUTE] Sending Response Back to Client:");
+    console.log(JSON.stringify(result, null, 2));
+    console.log("--------------------------------------------------\n");
 
-    return NextResponse.json({
-      success: true,
-      data: result.response,
-      meta: {
-        ...result.meta,
-        timestamp: new Date().toISOString(),
-      },
-    });
+    return NextResponse.json(result);
   } catch (error: any) {
-    console.error("Error processing chat route:", error);
+    console.error("❌ [/api/chat API ROUTE ERROR]:", error);
     return NextResponse.json(
-      { error: "Failed to process chat request", details: error.message },
+      {
+        success: false,
+        error: error?.message || "Internal Server Error in /api/chat",
+        meta: {
+          timestamp: new Date().toISOString(),
+        },
+      },
       { status: 500 }
     );
   }

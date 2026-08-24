@@ -3,7 +3,7 @@ import { ChatMessageModel } from "@/lib/models/ChatMessageModel";
 import { sendChatToN8n } from "@/lib/n8n";
 import { N8nChatPayload } from "@/types/property";
 
-export async function processUserChatMessage(payload: N8nChatPayload) {
+export async function processChatRequest(payload: N8nChatPayload) {
   const dbStatus = await connectToDatabase();
 
   if (dbStatus.isConnected) {
@@ -37,11 +37,17 @@ export async function processUserChatMessage(payload: N8nChatPayload) {
   }
 
   return {
-    response: n8nResult.response,
+    success: true,
+    data: n8nResult.response,
     meta: {
       isMockFallback: n8nResult.isMock,
       n8nUrl: n8nResult.n8nUrlUsed,
+      statusCode: n8nResult.statusCode,
+      rawResponse: n8nResult.rawResponse,
       isMongoDbSaved: dbStatus.isConnected,
+      timestamp: new Date().toISOString(),
     },
   };
 }
+
+export const processUserChatMessage = processChatRequest;
