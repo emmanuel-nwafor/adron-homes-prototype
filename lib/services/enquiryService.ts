@@ -7,6 +7,7 @@ export interface ExtendedEnquiryPayload extends EnquiryPayload {
   sessionId?: string;
   title?: string;
   referredByMarketer?: boolean;
+  isSubscription?: boolean;
   isFromN8n?: boolean;
 }
 
@@ -22,14 +23,15 @@ export async function processLeadEnquiry(payload: ExtendedEnquiryPayload) {
         email: payload.email || "",
         phone: payload.phone,
         referredByMarketer: payload.referredByMarketer || false,
+        isSubscription: payload.isSubscription || false,
         propertyId: payload.propertyId || "",
         propertyTitle: payload.propertyTitle || "",
         preferredInspectionDate: payload.preferredInspectionDate || "",
         message: payload.message || "",
         leadSource: payload.leadSource || "Adron Web Prototype",
-        status: payload.referredByMarketer ? "subscribed" : "new",
+        status: payload.isSubscription || payload.referredByMarketer ? "subscribed" : "new",
       });
-      console.log(`[MongoDB Atlas] Successfully recorded lead enquiry ID: ${doc._id}`);
+      console.log(`[MongoDB Atlas] Successfully recorded lead enquiry ID: ${doc._id} (isSubscription: ${payload.isSubscription})`);
       isMongoDbSaved = true;
     } catch (err) {
       console.warn("[MongoDB Atlas] Error creating lead enquiry document:", err);

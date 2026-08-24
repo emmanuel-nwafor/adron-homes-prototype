@@ -115,9 +115,9 @@ export async function sendChatToN8n(payload: N8nChatPayload): Promise<{
 }
 
 /**
- * Dispatch property enquiry to lead generation workflow with guaranteed sessionId.
+ * Dispatch property enquiry to lead generation workflow with guaranteed sessionId and isSubscription flag.
  */
-export async function sendEnquiryToN8n(payload: EnquiryPayload & { sessionId?: string }): Promise<{
+export async function sendEnquiryToN8n(payload: EnquiryPayload & { sessionId?: string; isSubscription?: boolean }): Promise<{
   success: boolean;
   message: string;
   isMock: boolean;
@@ -134,12 +134,12 @@ export async function sendEnquiryToN8n(payload: EnquiryPayload & { sessionId?: s
     };
   }
 
-  // Ensure sessionId is ALWAYS populated so n8n memory nodes never receive undefined
   const sessionId = payload.sessionId || `enquiry_session_${Date.now()}`;
   const enquiryBody = {
     type: "PROPERTY_ENQUIRY",
     enquiryType: "lead",
     sessionId: sessionId,
+    isSubscription: payload.isSubscription || false,
     name: payload.fullName,
     fullName: payload.fullName,
     phone: payload.phone,

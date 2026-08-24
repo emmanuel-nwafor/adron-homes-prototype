@@ -19,7 +19,8 @@ export async function POST(request: Request) {
     const preferredInspectionDate = rawBody.preferredInspectionDate || rawBody.inspectionDate || "";
     const message = rawBody.message || rawBody.enquiry || (rawBody.budget ? `Budget: ${rawBody.budget}` : "");
     const referredByMarketer = rawBody.referredByMarketer || false;
-    const leadSource = rawBody.leadSource || (rawBody.enquiryType ? `n8n Tool (${rawBody.enquiryType})` : "Adron Web Lead Form");
+    const isSubscription = Boolean(rawBody.isSubscription || rawBody.leadSource?.toLowerCase().includes("subscription") || rawBody.enquiryType === "subscription");
+    const leadSource = rawBody.leadSource || (rawBody.enquiryType ? `n8n Tool (${rawBody.enquiryType})` : isSubscription ? "Adron Subscription Modal" : "Adron Web Lead Form");
     const isFromN8n = Boolean(rawBody.type || rawBody.enquiryType);
 
     if (!fullName || !phone) {
@@ -41,6 +42,7 @@ export async function POST(request: Request) {
       email,
       phone,
       referredByMarketer,
+      isSubscription,
       propertyId,
       propertyTitle,
       preferredInspectionDate,
@@ -62,6 +64,7 @@ export async function POST(request: Request) {
         fullName,
         phone,
         email,
+        isSubscription,
         propertyTitle,
         preferredInspectionDate,
       },

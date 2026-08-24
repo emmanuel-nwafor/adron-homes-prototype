@@ -45,6 +45,7 @@ export function SubscribeModal({ property, isOpen, onClose }: SubscribeModalProp
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           sessionId: activeSessionId,
+          isSubscription: true,
           title,
           fullName: `${title} ${fullName}`.trim(),
           email,

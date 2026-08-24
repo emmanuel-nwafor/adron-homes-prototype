@@ -79,7 +79,6 @@ export function ChatWidget({ initialPropertyTitle, initialPropertyId }: ChatWidg
 
       const json = await res.json();
 
-      // Extract response output from server API response payload
       const responseText =
         json.data?.output ||
         json.data?.response ||
@@ -142,8 +141,11 @@ export function ChatWidget({ initialPropertyTitle, initialPropertyId }: ChatWidg
             </button>
           </div>
 
-          {/* Messages Feed */}
-          <div className="flex-1 p-4 overflow-y-auto space-y-3 bg-zinc-50 dark:bg-zinc-950/50">
+          {/* Messages Feed (Mouse wheel & touchpad scrolling enabled via data-lenis-prevent) */}
+          <div
+            className="flex-1 p-4 overflow-y-auto space-y-3 bg-zinc-50 dark:bg-zinc-950/50 touch-pan-y"
+            data-lenis-prevent
+          >
             {messages.map((msg) => (
               <div
                 key={msg.id}

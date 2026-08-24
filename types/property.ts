@@ -56,6 +56,7 @@ export interface EnquiryPayload {
   fullName: string;
   email: string;
   phone: string;
+  isSubscription?: boolean;
   propertyId?: string;
   propertyTitle?: string;
   preferredInspectionDate?: string;

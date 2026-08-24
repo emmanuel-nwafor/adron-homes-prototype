@@ -6,6 +6,7 @@ export interface IEnquiryDocument extends Document {
   email?: string;
   phone: string;
   referredByMarketer?: boolean;
+  isSubscription?: boolean;
   propertyId?: string;
   propertyTitle?: string;
   preferredInspectionDate?: string;
@@ -23,6 +24,7 @@ const EnquirySchema = new Schema<IEnquiryDocument>(
     email: { type: String },
     phone: { type: String, required: true },
     referredByMarketer: { type: Boolean, default: false },
+    isSubscription: { type: Boolean, default: false },
     propertyId: { type: String },
     propertyTitle: { type: String },
     preferredInspectionDate: { type: String },
