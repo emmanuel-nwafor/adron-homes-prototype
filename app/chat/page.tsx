@@ -2,37 +2,29 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import { Navbar } from "@/components/navbar";
-import { Footer } from "@/components/footer";
 import { ChatMessage, N8nChatPayload } from "@/types/property";
 import { MarkdownRenderer } from "@/components/markdown-renderer";
+import { ThemeToggle } from "@/components/theme-toggle";
 import {
   Bot,
+  Building2,
+  Calendar,
   Code2,
+  CreditCard,
+  Home,
   MessageSquare,
   Plus,
   RefreshCw,
+  Search,
   Send,
+  Sparkles,
   Terminal,
   User,
 } from "lucide-react";
 
 export default function ChatPage() {
   const [activeSessionId, setActiveSessionId] = useState<string>("");
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      id: "init_1",
-      sender: "assistant",
-      text: "Hello! Welcome to **Adron AI Assistant**. I am your official real estate consultant.\n\nHow can I help you today? Ask me about live properties, plot sizes (300sqm / 500sqm), title verification (C of O), 36-month flexible payment plans, or booking a free physical site tour!",
-      timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      suggestedActions: [
-        "What can I get for 15 million naira?",
-        "Tell me about 300sqm plot in Eko City",
-        "Do you offer installment payments?",
-        "Book a free site inspection",
-      ],
-    },
-  ]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [lastPayloadSent, setLastPayloadSent] = useState<N8nChatPayload | null>(null);
@@ -41,7 +33,7 @@ export default function ChatPage() {
 
   const chatEndRef = useRef<HTMLDivElement>(null);
 
-  // Initialize real-time session ID per browser session
+  // Initialize session ID and load saved chat history
   useEffect(() => {
     let sid = sessionStorage.getItem("adron_chat_page_session_id");
     if (!sid) {
@@ -49,11 +41,26 @@ export default function ChatPage() {
       sessionStorage.setItem("adron_chat_page_session_id", sid);
     }
     setActiveSessionId(sid);
+    fetchChatHistory(sid);
   }, []);
 
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (messages.length > 0) {
+      chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
   }, [messages]);
+
+  const fetchChatHistory = async (sid: string) => {
+    try {
+      const res = await fetch(`/api/chat?sessionId=${sid}`);
+      const json = await res.json();
+      if (json.success && json.messages && json.messages.length > 0) {
+        setMessages(json.messages);
+      }
+    } catch (err) {
+      console.warn("Could not fetch chat history:", err);
+    }
+  };
 
   const handleSendMessage = async (customText?: string) => {
     const text = customText || input;
@@ -114,87 +121,72 @@ export default function ChatPage() {
     }
   };
 
-  const savedThreads = [
-    { id: "t1", title: "Eko City Shimawa Pricing", date: "Today" },
-    { id: "t2", title: "36-Month Payment Plan Calculation", date: "Yesterday" },
-    { id: "t3", title: "Abuja Manhattan Park Inquiry", date: "3 days ago" },
-  ];
-
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 flex flex-col font-sans transition-colors duration-200">
-      <Navbar />
+    <div className="h-screen w-screen bg-[#07090e] text-zinc-100 flex font-sans overflow-hidden relative selection:bg-emerald-500 selection:text-white">
+      {/* Background Radial Glow */}
+      <div className="fixed inset-0 pointer-events-none bg-[radial-gradient(circle_at_50%_20%,#064e3b33,transparent_70%)]" />
 
-      {/* ChatGPT Layout Workspace */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full grid grid-cols-1 md:grid-cols-12 gap-6 h-[calc(100vh-140px)] min-h-[600px]">
-        {/* Left Sidebar */}
-        <div className="hidden md:flex md:col-span-4 lg:col-span-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-4 flex-col justify-between shadow-sm">
-          <div className="space-y-4">
-            <button
-              onClick={() => {
-                const newSid = `session_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
-                sessionStorage.setItem("adron_chat_page_session_id", newSid);
-                setActiveSessionId(newSid);
-                setMessages([
-                  {
-                    id: `new_${Date.now()}`,
-                    sender: "assistant",
-                    text: "New real-time conversation session started! How can I assist you with Adron Estates?",
-                    timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-                    suggestedActions: ["Show Featured Estates", "Book Free Tour"],
-                  },
-                ]);
-              }}
-              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs py-3 px-4 rounded-2xl transition-all shadow-md shadow-emerald-600/20 flex items-center justify-center gap-2 font-aclonica cursor-pointer"
-            >
-              <Plus className="w-4 h-4" /> New Chat Session
-            </button>
+      <div className="w-full h-full p-2 sm:p-4 flex gap-3 sm:gap-4 overflow-hidden relative">
+        {/* Left Vertical Dock Sidebar */}
+        <aside className="hidden md:flex flex-col justify-between items-center py-5 px-3 bg-zinc-900/70 backdrop-blur-2xl border border-zinc-800/80 rounded-3xl w-16 shrink-0 shadow-2xl z-20">
+          <div className="flex flex-col items-center gap-6">
+            <Link href="/" className="w-10 h-10 rounded-2xl bg-emerald-600 flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-emerald-600/30 hover:scale-105 transition-transform">
+              A
+            </Link>
 
-            <div className="space-y-1">
-              <span className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider px-2">Saved Conversations</span>
-              {savedThreads.map((t) => (
-                <button
-                  key={t.id}
-                  onClick={() => {
-                    setActiveSessionId(`session_${t.id}`);
-                  }}
-                  className={`w-full p-2.5 rounded-xl text-left text-xs font-semibold flex items-center justify-between transition-colors ${
-                    activeSessionId.includes(t.id)
-                      ? "bg-zinc-100 dark:bg-zinc-800 text-emerald-600 dark:text-emerald-400"
-                      : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800/60"
-                  }`}
-                >
-                  <span className="truncate flex items-center gap-2">
-                    <MessageSquare className="w-3.5 h-3.5 shrink-0" /> {t.title}
-                  </span>
-                  <span className="text-[10px] text-zinc-400 font-normal shrink-0">{t.date}</span>
-                </button>
-              ))}
+            <nav className="flex flex-col gap-4">
+              <Link href="/" className="p-2.5 rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-800/80 transition-colors" title="Home Landing">
+                <Home className="w-5 h-5" />
+              </Link>
+              <Link href="/properties" className="p-2.5 rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-800/80 transition-colors" title="Properties Catalog">
+                <Building2 className="w-5 h-5" />
+              </Link>
+              <button
+                onClick={() => {
+                  const newSid = `session_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+                  sessionStorage.setItem("adron_chat_page_session_id", newSid);
+                  setActiveSessionId(newSid);
+                  setMessages([]);
+                }}
+                className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-colors cursor-pointer"
+                title="New Chat Session"
+              >
+                <Plus className="w-5 h-5" />
+              </button>
+            </nav>
+          </div>
+
+          <div className="flex flex-col items-center gap-4">
+            <ThemeToggle />
+            <div className="relative">
+              <div className="w-9 h-9 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center font-bold text-xs text-white">
+                <User className="w-4 h-4 text-emerald-400" />
+              </div>
+              <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-zinc-950 animate-pulse" />
             </div>
           </div>
+        </aside>
 
-          <div className="pt-4 border-t border-zinc-200 dark:border-zinc-800 flex items-center justify-between text-xs text-zinc-500">
-            <span className="flex items-center gap-1.5 font-semibold text-zinc-700 dark:text-zinc-300">
-              <User className="w-4 h-4 text-emerald-600" /> Session Active
-            </span>
-            <span className="text-[10px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded font-mono font-bold">
-              Live
-            </span>
-          </div>
-        </div>
-
-        {/* Center Main ChatGPT Conversation Workspace */}
-        <div className="col-span-1 md:col-span-8 lg:col-span-9 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl overflow-hidden shadow-sm flex flex-col justify-between">
-          {/* Header */}
-          <div className="bg-zinc-100 dark:bg-zinc-950 px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
+        {/* Main Gemini-Style AI Workspace Container */}
+        <main className="flex-1 bg-zinc-900/40 backdrop-blur-2xl border border-zinc-800/80 rounded-3xl overflow-hidden shadow-2xl flex flex-col justify-between relative h-full">
+          {/* Top Fixed Header Bar */}
+          <header className="bg-zinc-900/90 backdrop-blur-md px-4 sm:px-6 py-3 border-b border-zinc-800/80 flex items-center justify-between shrink-0 z-20">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold shadow-md">
-                <Bot className="w-5 h-5" />
+              <Link href="/" className="md:hidden w-8 h-8 rounded-xl bg-emerald-600 flex items-center justify-center text-white font-bold text-xs">
+                A
+              </Link>
+              <div className="w-8 h-8 rounded-xl bg-emerald-600/20 border border-emerald-500/30 text-emerald-400 flex items-center justify-center font-bold">
+                <Bot className="w-4 h-4" />
               </div>
               <div>
-                <h3 className="font-bold text-sm text-zinc-950 dark:text-white font-aclonica">Adron AI Consultant</h3>
-                <p className="text-[11px] text-emerald-600 dark:text-emerald-400 flex items-center gap-1 font-mono">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
-                  Session: {activeSessionId ? activeSessionId.substring(0, 18) : "Connecting..."}
+                <h3 className="font-bold text-xs sm:text-sm text-white font-aclonica flex items-center gap-2">
+                  Adron AI Workspace
+                  <span className="text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full font-mono">
+                    Gemini Engine
+                  </span>
+                </h3>
+                <p className="text-[10px] text-zinc-400 font-mono">
+                  Session: {activeSessionId ? activeSessionId.substring(0, 16) : "Connecting..."}
                 </p>
               </div>
             </div>
@@ -202,121 +194,217 @@ export default function ChatPage() {
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setShowJsonInspector(!showJsonInspector)}
-                className="text-xs text-zinc-500 hover:text-zinc-900 dark:hover:text-white flex items-center gap-1 font-mono cursor-pointer"
+                className="text-xs text-zinc-400 hover:text-white flex items-center gap-1 font-mono cursor-pointer"
               >
-                <Code2 className="w-4 h-4" /> {showJsonInspector ? "Hide Payload" : "Inspect Payload"}
+                <Code2 className="w-4 h-4 text-emerald-400" /> {showJsonInspector ? "Hide Payload" : "Inspect Payload"}
               </button>
-              <Link href="/properties" className="text-xs text-emerald-600 dark:text-emerald-400 font-bold hover:underline">
-                Browse Estates &rarr;
+              <Link href="/properties" className="text-xs text-emerald-400 font-bold hover:underline hidden sm:inline">
+                Explore Estates &rarr;
               </Link>
             </div>
-          </div>
+          </header>
 
-          {/* JSON Inspector Panel (Collapsible) */}
+          {/* JSON Inspector Panel */}
           {showJsonInspector && (
-            <div className="bg-zinc-950 text-emerald-400 p-4 border-b border-zinc-800 font-mono text-xs space-y-2 animate-in slide-in-from-top-2">
+            <div className="bg-zinc-950 text-emerald-400 p-4 border-b border-zinc-800 font-mono text-xs space-y-2 animate-in slide-in-from-top-2 shrink-0 z-20">
               <div className="flex items-center justify-between">
                 <span className="font-bold text-white flex items-center gap-1.5">
-                  <Terminal className="w-4 h-4 text-emerald-400" /> Target Webhook Variable (N8N_WEBHOOK_URL):
+                  <Terminal className="w-4 h-4 text-emerald-400" /> Target Environment Variable:
                 </span>
                 <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded">
-                  {lastResponseMeta?.n8nUrl || process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL || "Configured via .env.local"}
+                  {lastResponseMeta?.n8nUrl || process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL || "N8N_WEBHOOK_URL"}
                 </span>
               </div>
               <div>
                 <span className="text-zinc-400 block mb-1">Last Outgoing JSON Body:</span>
                 <pre className="bg-zinc-900 p-2.5 rounded border border-zinc-800 text-[11px] overflow-x-auto">
-                  {lastPayloadSent ? JSON.stringify(lastPayloadSent, null, 2) : "// Awaiting user input..."}
+                  {lastPayloadSent ? JSON.stringify(lastPayloadSent, null, 2) : "// Awaiting prompt submission..."}
                 </pre>
               </div>
             </div>
           )}
 
-          {/* Message Stream */}
-          <div className="flex-1 p-6 overflow-y-auto space-y-6 bg-zinc-50/50 dark:bg-zinc-950/40">
-            {messages.map((m) => (
-              <div
-                key={m.id}
-                className={`flex gap-3.5 max-w-3xl ${m.sender === "user" ? "ml-auto flex-row-reverse" : ""}`}
-              >
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 font-bold text-xs ${
-                  m.sender === "user" ? "bg-zinc-800 text-white" : "bg-emerald-600 text-white shadow-md"
-                }`}>
-                  {m.sender === "user" ? "U" : <Bot className="w-4 h-4" />}
+          {/* Middle Scrollable Chat Stream (Only this section scrolls!) */}
+          <div className="flex-1 p-4 sm:p-6 overflow-y-auto space-y-6 scrollbar-thin scrollbar-thumb-zinc-800">
+            {messages.length === 0 ? (
+              /* Hero Splash View (Matching Reference Screenshot) */
+              <div className="h-full flex flex-col items-center justify-center text-center space-y-6 my-auto py-6">
+                {/* 3D Iridescent Orb Avatar */}
+                <div className="relative group cursor-pointer">
+                  <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-gradient-to-tr from-emerald-600 via-cyan-400 to-indigo-600 animate-pulse shadow-[0_0_60px_rgba(16,185,129,0.4)] flex items-center justify-center p-1">
+                    <div className="w-full h-full rounded-full bg-zinc-950/80 backdrop-blur-sm flex items-center justify-center">
+                      <Sparkles className="w-10 h-10 text-emerald-400 animate-bounce" />
+                    </div>
+                  </div>
                 </div>
 
-                <div className="space-y-2 max-w-[88%]">
-                  <div
-                    className={`rounded-2xl p-4 text-xs sm:text-sm leading-relaxed ${
-                      m.sender === "user"
-                        ? "bg-emerald-600 text-white font-medium rounded-tr-none shadow-md"
-                        : "bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 rounded-tl-none border border-zinc-200 dark:border-zinc-700/60 shadow-sm"
-                    }`}
+                {/* Hero Greeting Typography */}
+                <div className="space-y-2 max-w-xl">
+                  <h1 className="text-2xl sm:text-4xl font-extrabold text-white font-aclonica tracking-tight">
+                    Hi, Welcome to Adron AI
+                  </h1>
+                  <h2 className="text-xl sm:text-3xl font-bold text-zinc-300">
+                    How can I help today?
+                  </h2>
+                  <p className="text-xs sm:text-sm text-zinc-400 max-w-md mx-auto pt-1">
+                    I&apos;m here to help — from quick property budget searches to 36-month payment plans and free site inspection tour bookings.
+                  </p>
+                </div>
+
+                {/* Bottom Quick Feature Cards Row */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-3xl w-full pt-2">
+                  <button
+                    onClick={() => handleSendMessage("Show properties under ₦20 Million")}
+                    className="p-4 rounded-2xl bg-zinc-900/80 hover:bg-zinc-800/90 border border-zinc-800 text-left space-y-2 transition-all hover:border-emerald-500/40 group cursor-pointer"
                   >
-                    <MarkdownRenderer content={m.text} />
-                  </div>
-
-                  <span className="text-[10px] text-zinc-400 block px-1">{m.timestamp}</span>
-
-                  {m.suggestedActions && (
-                    <div className="flex flex-wrap gap-2 pt-1">
-                      {m.suggestedActions.map((action, i) => (
-                        <button
-                          key={i}
-                          onClick={() => handleSendMessage(action)}
-                          className="text-xs bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 px-3 py-1.5 rounded-full transition-colors font-medium text-left cursor-pointer"
-                        >
-                          ⚡ {action}
-                        </button>
-                      ))}
+                    <div className="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <Search className="w-4 h-4" />
                     </div>
-                  )}
+                    <h4 className="font-bold text-xs text-white">Search Estates</h4>
+                    <p className="text-[11px] text-zinc-400">Find verified land plots matching your exact budget.</p>
+                  </button>
+
+                  <button
+                    onClick={() => handleSendMessage("How does 36-month flexible payment work?")}
+                    className="p-4 rounded-2xl bg-zinc-900/80 hover:bg-zinc-800/90 border border-zinc-800 text-left space-y-2 transition-all hover:border-emerald-500/40 group cursor-pointer"
+                  >
+                    <div className="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <CreditCard className="w-4 h-4" />
+                    </div>
+                    <h4 className="font-bold text-xs text-white">Payment Plans</h4>
+                    <p className="text-[11px] text-zinc-400">Daily installments starting from ₦2,750/day.</p>
+                  </button>
+
+                  <button
+                    onClick={() => handleSendMessage("I'd like to inspect property tomorrow")}
+                    className="p-4 rounded-2xl bg-zinc-900/80 hover:bg-zinc-800/90 border border-zinc-800 text-left space-y-2 transition-all hover:border-emerald-500/40 group cursor-pointer"
+                  >
+                    <div className="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <Calendar className="w-4 h-4" />
+                    </div>
+                    <h4 className="font-bold text-xs text-white">Book Free Tour</h4>
+                    <p className="text-[11px] text-zinc-400">Reserve executive bus seats for physical site inspection.</p>
+                  </button>
                 </div>
               </div>
-            ))}
+            ) : (
+              /* Active Message Stream */
+              <div className="space-y-6 max-w-4xl mx-auto">
+                {messages.map((m) => (
+                  <div
+                    key={m.id}
+                    className={`flex gap-3.5 max-w-3xl ${m.sender === "user" ? "ml-auto flex-row-reverse" : ""}`}
+                  >
+                    <div className={`w-8 h-8 rounded-2xl flex items-center justify-center shrink-0 font-bold text-xs ${
+                      m.sender === "user" ? "bg-zinc-800 text-white" : "bg-emerald-600 text-white shadow-lg shadow-emerald-600/30"
+                    }`}>
+                      {m.sender === "user" ? "U" : <Bot className="w-4 h-4" />}
+                    </div>
 
-            {loading && (
-              <div className="flex items-center gap-3 text-xs text-emerald-600 dark:text-emerald-400 bg-white dark:bg-zinc-800 p-3 rounded-2xl border border-zinc-200 dark:border-zinc-700 w-fit shadow-sm">
-                <RefreshCw className="w-4 h-4 animate-spin" />
-                <span>Adron AI Sales Agent is reasoning and querying live inventory...</span>
+                    <div className="space-y-2 max-w-[90%]">
+                      <div
+                        className={`rounded-3xl p-4 text-xs sm:text-sm leading-relaxed ${
+                          m.sender === "user"
+                            ? "bg-emerald-600 text-white font-medium rounded-tr-none shadow-lg"
+                            : "bg-zinc-900/90 text-zinc-100 rounded-tl-none border border-zinc-800 shadow-md"
+                        }`}
+                      >
+                        <MarkdownRenderer content={m.text} />
+                      </div>
+
+                      <span className="text-[10px] text-zinc-500 block px-1">{m.timestamp}</span>
+
+                      {m.suggestedActions && (
+                        <div className="flex flex-wrap gap-2 pt-1">
+                          {m.suggestedActions.map((action, i) => (
+                            <button
+                              key={i}
+                              onClick={() => handleSendMessage(action)}
+                              className="text-xs bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-3 py-1 rounded-full transition-colors font-medium text-left cursor-pointer"
+                            >
+                              ⚡ {action}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+
+                {loading && (
+                  <div className="flex items-center gap-3 text-xs text-emerald-400 bg-zinc-900 p-3.5 rounded-2xl border border-zinc-800 w-fit shadow-md animate-pulse">
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    <span>Adron AI Agent is reasoning & querying live inventory...</span>
+                  </div>
+                )}
+                <div ref={chatEndRef} />
               </div>
             )}
-            <div ref={chatEndRef} />
           </div>
 
-          {/* ChatGPT Prompt Input Bar */}
-          <div className="p-4 bg-white dark:bg-zinc-900 border-t border-zinc-200 dark:border-zinc-800 space-y-2">
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleSendMessage();
-              }}
-              className="flex items-center gap-3"
-            >
-              <input
-                type="text"
-                placeholder="Ask about properties, plot sizes, C of O verification, or schedule site inspection..."
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                className="flex-1 bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-white text-xs sm:text-sm px-4 py-3.5 rounded-2xl border border-zinc-200 dark:border-zinc-700 focus:outline-none focus:border-emerald-600 placeholder:text-zinc-400"
-              />
-              <button
-                type="submit"
-                disabled={loading || !input.trim()}
-                className="bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40 text-white font-bold p-3.5 rounded-2xl transition-all shadow-md shadow-emerald-600/20 font-aclonica cursor-pointer"
+          {/* Locked Bottom Prompt Input Bar (Fixed at bottom like Gemini / ChatGPT) */}
+          <div className="shrink-0 p-3 sm:p-4 bg-gradient-to-t from-[#07090e] via-[#07090e]/95 to-transparent z-20">
+            <div className="max-w-3xl mx-auto bg-zinc-900/95 backdrop-blur-2xl border border-zinc-800 rounded-3xl p-3 shadow-2xl space-y-2">
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleSendMessage();
+                }}
+                className="flex flex-col space-y-2"
               >
-                <Send className="w-4 h-4" />
-              </button>
-            </form>
+                <textarea
+                  rows={2}
+                  placeholder="Ask me anything about Adron Homes land plots, prices, titles..."
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSendMessage();
+                    }
+                  }}
+                  className="w-full bg-transparent text-white text-xs sm:text-sm px-3 py-1 focus:outline-none placeholder:text-zinc-500 resize-none"
+                />
 
-            <p className="text-[10px] text-zinc-400 text-center">
-              Active Environment Webhook: <code className="text-emerald-500 font-mono">N8N_WEBHOOK_URL</code> configured in <code className="text-zinc-300">.env.local</code>
-            </p>
+                {/* Bottom Quick Action Pills & Send Button */}
+                <div className="flex items-center justify-between border-t border-zinc-800/80 pt-2 px-1">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <button
+                      type="button"
+                      onClick={() => handleSendMessage("Show properties under ₦20 Million")}
+                      className="text-[11px] bg-zinc-800/80 hover:bg-zinc-700/80 text-zinc-300 px-2.5 py-1 rounded-xl transition-colors font-medium flex items-center gap-1 cursor-pointer"
+                    >
+                      📁 Browse
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleSendMessage("Tell me more about 300sqm plot")}
+                      className="text-[11px] bg-zinc-800/80 hover:bg-zinc-700/80 text-zinc-300 px-2.5 py-1 rounded-xl transition-colors font-medium flex items-center gap-1 cursor-pointer"
+                    >
+                      📐 300sqm Details
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleSendMessage("Do you offer installment payments?")}
+                      className="text-[11px] bg-zinc-800/80 hover:bg-zinc-700/80 text-zinc-300 px-2.5 py-1 rounded-xl transition-colors font-medium flex items-center gap-1 cursor-pointer hidden sm:flex"
+                    >
+                      💳 Payment FAQ
+                    </button>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={loading || !input.trim()}
+                    className="w-10 h-10 rounded-full bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 text-white flex items-center justify-center font-bold transition-all shadow-lg shadow-emerald-600/30 cursor-pointer shrink-0"
+                  >
+                    <Send className="w-4 h-4" />
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
-        </div>
-      </main>
-
-      <Footer />
+        </main>
+      </div>
     </div>
   );
 }

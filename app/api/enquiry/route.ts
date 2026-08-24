@@ -13,6 +13,7 @@ export async function POST(request: Request) {
     const phone = rawBody.phone || rawBody.phoneNumber || rawBody.telephone;
     const email = rawBody.email || "";
     const title = rawBody.title || "";
+    const sessionId = rawBody.sessionId || `session_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
     const propertyId = rawBody.propertyId || "";
     const propertyTitle = rawBody.propertyTitle || rawBody.propertyName || rawBody.propertyId || "";
     const preferredInspectionDate = rawBody.preferredInspectionDate || rawBody.inspectionDate || "";
@@ -34,6 +35,7 @@ export async function POST(request: Request) {
     }
 
     const normalizedPayload = {
+      sessionId,
       title,
       fullName,
       email,
@@ -56,6 +58,7 @@ export async function POST(request: Request) {
       success: true,
       message: result.message,
       lead: {
+        sessionId,
         fullName,
         phone,
         email,

@@ -39,6 +39,8 @@ export async function processChatRequest(payload: N8nChatPayload) {
   return {
     success: true,
     data: n8nResult.response,
+    response: n8nResult.response.output,
+    output: n8nResult.response.output,
     meta: {
       isMockFallback: n8nResult.isMock,
       n8nUrl: n8nResult.n8nUrlUsed,
@@ -51,3 +53,33 @@ export async function processChatRequest(payload: N8nChatPayload) {
 }
 
 export const processUserChatMessage = processChatRequest;
+
+/**
+ * Fetch saved conversation history for a specific sessionId from MongoDB Atlas
+ */
+export async function getChatHistoryBySessionId(sessionId: string) {
+  const dbStatus = await connectToDatabase();
+
+  if (!dbStatus.isConnected) {
+    return [];
+  }
+
+  try {
+    const docs = await ChatMessageModel.find({ sessionId })
+      .sort({ createdAt: 1 })
+      .limit(100)
+      .lean();
+
+    return docs.map((doc: any) => ({
+      id: String(doc._id),
+      sender: doc.sender as "user" | "assistant" | "system",
+      text: doc.text,
+      timestamp: new Date(doc.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      suggestedActions: doc.suggestedActions,
+      relatedPropertyIds: doc.relatedPropertyIds,
+    }));
+  } catch (err) {
+    console.warn("[MongoDB Atlas] Error fetching chat history:", err);
+    return [];
+  }
+}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { X, ArrowLeft, ArrowRight, CheckCircle2, Building, Sparkles } from "lucide-react";
+import { X, ArrowLeft, ArrowRight, CheckCircle2 } from "lucide-react";
 import { Property } from "@/types/property";
 
 interface SubscribeModalProps {
@@ -37,12 +37,14 @@ export function SubscribeModal({ property, isOpen, onClose }: SubscribeModalProp
 
     setIsSubmitting(true);
     setSuccessMessage(null);
+    const activeSessionId = sessionStorage.getItem("adron_chat_session_id") || `session_${Date.now()}`;
 
     try {
       const res = await fetch("/api/enquiry", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          sessionId: activeSessionId,
           title,
           fullName: `${title} ${fullName}`.trim(),
           email,

@@ -26,12 +26,14 @@ export function EnquiryModal({ property, isOpen, onClose }: EnquiryModalProps) {
     if (!fullName || !phone) return;
 
     setIsSubmitting(true);
+    const activeSessionId = sessionStorage.getItem("adron_chat_session_id") || `session_${Date.now()}`;
 
     try {
       const res = await fetch("/api/enquiry", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          sessionId: activeSessionId,
           fullName,
           phone,
           email,

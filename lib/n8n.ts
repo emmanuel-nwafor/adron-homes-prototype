@@ -2,7 +2,6 @@ import { N8nChatPayload, N8nChatResponse, EnquiryPayload } from "@/types/propert
 
 /**
  * Dispatch chat payload to n8n Webhook using process.env.N8N_WEBHOOK_URL.
- * Parses response body from n8n's "Respond to Webhook" node.
  */
 export async function sendChatToN8n(payload: N8nChatPayload): Promise<{
   response: N8nChatResponse;
@@ -25,19 +24,25 @@ export async function sendChatToN8n(payload: N8nChatPayload): Promise<{
     };
   }
 
+  // Ensure sessionId is always present
+  const sanitizedPayload = {
+    ...payload,
+    sessionId: payload.sessionId || `session_${Date.now()}`,
+  };
+
   console.log("\n================ [N8N CHAT DISPATCH START] ================");
   console.log("🚀 TARGET WEBHOOK URL (from env):", webhookUrl);
-  console.log("📦 PAYLOAD SENT TO WEBHOOK:", JSON.stringify(payload, null, 2));
+  console.log("📦 PAYLOAD SENT TO WEBHOOK:", JSON.stringify(sanitizedPayload, null, 2));
 
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 20000); // 20 second timeout for AI reasoning
+    const timeoutId = setTimeout(() => controller.abort(), 20000); // 20 second timeout
 
     const startTime = Date.now();
     const res = await fetch(webhookUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(sanitizedPayload),
       signal: controller.signal,
     });
     clearTimeout(timeoutId);
@@ -58,7 +63,6 @@ export async function sendChatToN8n(payload: N8nChatPayload): Promise<{
     }
 
     if (res.ok) {
-      // Extract response string from n8n's "Respond to Chat" node output ({ success: true, response: "..." })
       const aiResponseText =
         parsedData.response ||
         parsedData.output ||
@@ -83,10 +87,9 @@ export async function sendChatToN8n(payload: N8nChatPayload): Promise<{
         rawResponse: resText,
       };
     } else {
-      // Direct n8n error returned (No mock fallback)
       return {
         response: {
-          output: `⚠️ **n8n Webhook Error (${res.status})**:\n\n\`\`\`json\n${resText}\n\`\`\`\n\n*Hint: If using a Test Webhook URL, click "Execute workflow" in your n8n canvas first so n8n listens for incoming calls!*`,
+          output: `⚠️ **n8n Webhook Error (${res.status})**:\n\n\`\`\`json\n${resText}\n\`\`\`\n\n*Hint: Click "Execute workflow" in your n8n canvas first so n8n listens for incoming calls!*`,
           suggestedActions: ["Retry Request", "Check n8n Canvas"],
         },
         isMock: false,
@@ -112,9 +115,9 @@ export async function sendChatToN8n(payload: N8nChatPayload): Promise<{
 }
 
 /**
- * Dispatch property enquiry to lead generation workflow using process.env.N8N_ENQUIRY_WEBHOOK_URL.
+ * Dispatch property enquiry to lead generation workflow with guaranteed sessionId.
  */
-export async function sendEnquiryToN8n(payload: EnquiryPayload): Promise<{
+export async function sendEnquiryToN8n(payload: EnquiryPayload & { sessionId?: string }): Promise<{
   success: boolean;
   message: string;
   isMock: boolean;
@@ -131,15 +134,31 @@ export async function sendEnquiryToN8n(payload: EnquiryPayload): Promise<{
     };
   }
 
+  // Ensure sessionId is ALWAYS populated so n8n memory nodes never receive undefined
+  const sessionId = payload.sessionId || `enquiry_session_${Date.now()}`;
+  const enquiryBody = {
+    type: "PROPERTY_ENQUIRY",
+    enquiryType: "lead",
+    sessionId: sessionId,
+    name: payload.fullName,
+    fullName: payload.fullName,
+    phone: payload.phone,
+    email: payload.email || "",
+    propertyId: payload.propertyId || "",
+    propertyTitle: payload.propertyTitle || "",
+    preferredInspectionDate: payload.preferredInspectionDate || "",
+    message: payload.message || "Property enquiry submission",
+  };
+
   console.log("\n================ [N8N ENQUIRY DISPATCH START] ================");
   console.log("🚀 TARGET WEBHOOK URL (from env):", webhookUrl);
-  console.log("📦 PAYLOAD SENT TO WEBHOOK:", JSON.stringify(payload, null, 2));
+  console.log("📦 PAYLOAD SENT TO WEBHOOK:", JSON.stringify(enquiryBody, null, 2));
 
   try {
     const res = await fetch(webhookUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ type: "PROPERTY_ENQUIRY", ...payload }),
+      body: JSON.stringify(enquiryBody),
     });
 
     const resText = await res.text();

@@ -4,6 +4,7 @@ import { sendEnquiryToN8n } from "@/lib/n8n";
 import { EnquiryPayload } from "@/types/property";
 
 export interface ExtendedEnquiryPayload extends EnquiryPayload {
+  sessionId?: string;
   title?: string;
   referredByMarketer?: boolean;
   isFromN8n?: boolean;
@@ -35,7 +36,7 @@ export async function processLeadEnquiry(payload: ExtendedEnquiryPayload) {
     }
   }
 
-  // Only dispatch to n8n if the request originated from the web frontend (not from n8n tool call itself)
+  // Only dispatch to n8n if request originated from web frontend
   let n8nResult = { success: true, message: "Lead recorded in database.", isMock: false };
   if (!payload.isFromN8n) {
     n8nResult = await sendEnquiryToN8n(payload);

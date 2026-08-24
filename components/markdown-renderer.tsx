@@ -15,11 +15,12 @@ interface MarkdownRendererProps {
  * 3. Markdown Bullet Lists (* item, - item)
  * 4. Markdown Links [text](url) -> Clickable Links
  * 5. Headings (### Heading)
+ *
+ * NOTE: Uses <div> containers for blocks instead of <p> to prevent invalid <div> inside <p> hydration errors.
  */
 export function MarkdownRenderer({ content }: MarkdownRendererProps) {
   if (!content) return null;
 
-  // Split content into blocks by lines
   const lines = content.split("\n");
   const renderedElements: React.ReactNode[] = [];
 
@@ -79,12 +80,12 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
       return;
     }
 
-    // Regular line
+    // Regular line block (Using <div> instead of <p> to prevent hydration errors when containing images)
     flushList();
     renderedElements.push(
-      <p key={`p_${lineIdx}`} className="leading-relaxed my-1">
+      <div key={`blk_${lineIdx}`} className="leading-relaxed my-1">
         {parseFormattedInlineText(trimmed)}
-      </p>
+      </div>
     );
   });
 
@@ -118,7 +119,6 @@ function parseFormattedInlineText(text: string): React.ReactNode {
           alt={alt}
           className="w-full h-44 sm:h-52 object-cover hover:scale-105 transition-transform duration-300"
           onError={(e) => {
-            // Fallback if image fails to load
             (e.target as HTMLElement).style.display = "none";
           }}
         />
@@ -128,7 +128,7 @@ function parseFormattedInlineText(text: string): React.ReactNode {
             href={src}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-emerald-400 hover:underline flex items-center gap-1 shrink-0 ml-2"
+            className="text-emerald-400 hover:underline flex items-center gap-1 shrink-0 ml-2 font-bold"
           >
             Full View <ExternalLink className="w-3 h-3" />
           </a>
@@ -150,7 +150,6 @@ function parseFormattedInlineText(text: string): React.ReactNode {
  * Parses markdown links [text](url) and bold **text**
  */
 function parseLinksAndBold(text: string, keyPrefix: string): React.ReactNode {
-  // Replace links [text](url)
   const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
   const elements: React.ReactNode[] = [];
   let lastIdx = 0;
