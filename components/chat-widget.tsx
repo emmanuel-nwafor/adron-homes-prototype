@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Bot, X, Send, RefreshCw, ChevronDown } from "lucide-react";
+import { Bot, ChevronDown, RefreshCw, Send } from "lucide-react";
 import { ChatMessage } from "@/types/property";
+import { MarkdownRenderer } from "@/components/markdown-renderer";
 
 interface ChatWidgetProps {
   initialPropertyTitle?: string;
@@ -18,11 +19,11 @@ export function ChatWidget({ initialPropertyTitle, initialPropertyId }: ChatWidg
       sender: "assistant",
       text: initialPropertyTitle
         ? `Hello! I am your Adron AI Assistant. How can I help you regarding **${initialPropertyTitle}**?`
-        : "Hello! Welcome to Adron Homes & Properties AI Assistant. Ask me about land prices, flexible payment plans, or site inspection bookings!",
+        : "Hello! Welcome to **Adron Homes & Properties** AI Assistant. Ask me about land prices, 36-month flexible payment plans, or site inspection bookings!",
       timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       suggestedActions: initialPropertyTitle
         ? ["Show Payment Breakdown", "Book Inspection", "Title Verification"]
-        : ["Show Estates under ₦15M", "How Payment Plans Work", "Book Free Site Inspection"],
+        : ["Show Estates under ₦20M", "How Payment Plans Work", "Book Free Site Inspection"],
     },
   ]);
   const [input, setInput] = useState("");
@@ -78,24 +79,32 @@ export function ChatWidget({ initialPropertyTitle, initialPropertyId }: ChatWidg
 
       const json = await res.json();
 
-      if (json.success && json.data) {
-        const assistantMsg: ChatMessage = {
-          id: `msg_ast_${Date.now()}`,
-          sender: "assistant",
-          text: json.data.output || json.data.text || "Thank you for inquiring with Adron Homes!",
-          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-          suggestedActions: json.data.suggestedActions,
-        };
+      // Extract response output from server API response payload
+      const responseText =
+        json.data?.output ||
+        json.data?.response ||
+        json.response ||
+        json.output ||
+        json.data?.text ||
+        json.text ||
+        "Thank you for inquiring with Adron Homes!";
 
-        setMessages((prev) => [...prev, assistantMsg]);
-      }
+      const assistantMsg: ChatMessage = {
+        id: `msg_ast_${Date.now()}`,
+        sender: "assistant",
+        text: responseText,
+        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        suggestedActions: json.data?.suggestedActions || json.suggestedActions,
+      };
+
+      setMessages((prev) => [...prev, assistantMsg]);
     } catch (err) {
       setMessages((prev) => [
         ...prev,
         {
           id: `msg_err_${Date.now()}`,
           sender: "system",
-          text: "Unable to connect to assistant backend. Please try again.",
+          text: "Unable to connect to assistant backend. Please verify server status.",
           timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         },
       ]);
@@ -108,7 +117,7 @@ export function ChatWidget({ initialPropertyTitle, initialPropertyId }: ChatWidg
     <div className="fixed bottom-5 right-5 z-50 flex flex-col items-end">
       {/* Expanded Chat Box */}
       {isOpen && (
-        <div className="w-[360px] sm:w-[400px] h-[520px] bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-5 duration-200 mb-3 text-zinc-900 dark:text-zinc-100">
+        <div className="w-[360px] sm:w-[420px] h-[550px] bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-5 duration-200 mb-3 text-zinc-900 dark:text-zinc-100">
           {/* Header */}
           <div className="bg-gradient-to-r from-zinc-900 to-zinc-950 p-4 border-b border-zinc-800 flex items-center justify-between text-white">
             <div className="flex items-center gap-3">
@@ -121,13 +130,13 @@ export function ChatWidget({ initialPropertyTitle, initialPropertyId }: ChatWidg
                 </h4>
                 <p className="text-[11px] text-emerald-400 flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                  Online • Instant Response
+                  Online • Autonomous Sales Agent
                 </p>
               </div>
             </div>
             <button
               onClick={() => setIsOpen(false)}
-              className="text-zinc-400 hover:text-white p-1 rounded-lg hover:bg-zinc-800 transition-colors"
+              className="text-zinc-400 hover:text-white p-1 rounded-lg hover:bg-zinc-800 transition-colors cursor-pointer"
             >
               <ChevronDown className="w-5 h-5" />
             </button>
@@ -143,7 +152,7 @@ export function ChatWidget({ initialPropertyTitle, initialPropertyId }: ChatWidg
                 }`}
               >
                 <div
-                  className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-xs leading-relaxed ${
+                  className={`max-w-[90%] rounded-2xl px-4 py-3 text-xs leading-relaxed ${
                     msg.sender === "user"
                       ? "bg-emerald-600 text-white font-medium rounded-br-none shadow-md"
                       : msg.sender === "system"
@@ -151,14 +160,14 @@ export function ChatWidget({ initialPropertyTitle, initialPropertyId }: ChatWidg
                       : "bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 rounded-bl-none border border-zinc-200 dark:border-zinc-700/60 shadow-sm"
                   }`}
                 >
-                  <p className="whitespace-pre-wrap">{msg.text}</p>
+                  <MarkdownRenderer content={msg.text} />
                 </div>
 
                 <span className="text-[10px] text-zinc-400 mt-1 px-1">{msg.timestamp}</span>
 
                 {/* Suggested actions if present */}
                 {msg.suggestedActions && (
-                  <div className="flex flex-wrap gap-1.5 mt-2 max-w-[90%]">
+                  <div className="flex flex-wrap gap-1.5 mt-2 max-w-[95%]">
                     {msg.suggestedActions.map((action, i) => (
                       <button
                         key={i}
@@ -176,7 +185,7 @@ export function ChatWidget({ initialPropertyTitle, initialPropertyId }: ChatWidg
             {loading && (
               <div className="flex items-center gap-2 text-xs text-emerald-600 dark:text-emerald-400 bg-white dark:bg-zinc-900 p-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 w-fit">
                 <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                <span>Processing AI response...</span>
+                <span>AI Agent is generating response...</span>
               </div>
             )}
 
@@ -196,7 +205,7 @@ export function ChatWidget({ initialPropertyTitle, initialPropertyId }: ChatWidg
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="Ask about estates, prices, discounts..."
+                placeholder="Ask about properties, plot sizes, C of O..."
                 className="flex-1 bg-zinc-100 dark:bg-zinc-950 text-zinc-900 dark:text-white text-xs px-3.5 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 focus:outline-none focus:border-emerald-600 placeholder:text-zinc-400"
               />
               <button

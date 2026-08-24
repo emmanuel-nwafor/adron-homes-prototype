@@ -6,6 +6,7 @@ import { EnquiryPayload } from "@/types/property";
 export interface ExtendedEnquiryPayload extends EnquiryPayload {
   title?: string;
   referredByMarketer?: boolean;
+  isFromN8n?: boolean;
 }
 
 export async function processLeadEnquiry(payload: ExtendedEnquiryPayload) {
@@ -27,18 +28,24 @@ export async function processLeadEnquiry(payload: ExtendedEnquiryPayload) {
         leadSource: payload.leadSource || "Adron Web Prototype",
         status: payload.referredByMarketer ? "subscribed" : "new",
       });
-      console.log(`[MongoDB Atlas] Successfully recorded lead subscription ID: ${doc._id}`);
+      console.log(`[MongoDB Atlas] Successfully recorded lead enquiry ID: ${doc._id}`);
       isMongoDbSaved = true;
     } catch (err) {
       console.warn("[MongoDB Atlas] Error creating lead enquiry document:", err);
     }
   }
 
-  const n8nResult = await sendEnquiryToN8n(payload);
+  // Only dispatch to n8n if the request originated from the web frontend (not from n8n tool call itself)
+  let n8nResult = { success: true, message: "Lead recorded in database.", isMock: false };
+  if (!payload.isFromN8n) {
+    n8nResult = await sendEnquiryToN8n(payload);
+  }
 
   return {
     success: true,
-    message: n8nResult.message,
+    message: payload.isFromN8n
+      ? `Lead enquiry for ${payload.fullName} (${payload.phone}) successfully recorded in Adron CRM!`
+      : n8nResult.message,
     meta: {
       isMockFallback: n8nResult.isMock,
       isMongoDbSaved,

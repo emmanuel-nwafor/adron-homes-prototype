@@ -5,10 +5,10 @@ import Link from "next/link";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { ChatMessage, N8nChatPayload } from "@/types/property";
+import { MarkdownRenderer } from "@/components/markdown-renderer";
 import {
   Bot,
   Code2,
-  Copy,
   MessageSquare,
   Plus,
   RefreshCw,
@@ -23,12 +23,12 @@ export default function ChatPage() {
     {
       id: "init_1",
       sender: "assistant",
-      text: "Hello! Welcome to **Adron AI Assistant**. I am your personal real estate consultant.\n\nHow can I help you today? You can ask me about verified land prices, seasonal 50% discount promos, title document verification (C of O, Excision), or booking a free physical site tour!",
+      text: "Hello! Welcome to **Adron AI Assistant**. I am your official real estate consultant.\n\nHow can I help you today? Ask me about live properties, plot sizes (300sqm / 500sqm), title verification (C of O), 36-month flexible payment plans, or booking a free physical site tour!",
       timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       suggestedActions: [
-        "What estates are in Shimawa?",
-        "Show estates under ₦20 Million",
-        "How does 36-month flexible payment work?",
+        "What can I get for 15 million naira?",
+        "Tell me about 300sqm plot in Eko City",
+        "Do you offer installment payments?",
         "Book a free site inspection",
       ],
     },
@@ -90,16 +90,23 @@ export default function ChatPage() {
       const json = await res.json();
       setLastResponseMeta(json.meta);
 
-      if (json.success && json.data) {
-        const assistantMsg: ChatMessage = {
-          id: `ast_${Date.now()}`,
-          sender: "assistant",
-          text: json.data.output || json.data.text || "Thank you for reaching out to Adron Homes!",
-          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-          suggestedActions: json.data.suggestedActions,
-        };
-        setMessages((prev) => [...prev, assistantMsg]);
-      }
+      const responseText =
+        json.data?.output ||
+        json.data?.response ||
+        json.response ||
+        json.output ||
+        json.data?.text ||
+        json.text ||
+        "Thank you for reaching out to Adron Homes!";
+
+      const assistantMsg: ChatMessage = {
+        id: `ast_${Date.now()}`,
+        sender: "assistant",
+        text: responseText,
+        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        suggestedActions: json.data?.suggestedActions || json.suggestedActions,
+      };
+      setMessages((prev) => [...prev, assistantMsg]);
     } catch (err) {
       console.error(err);
     } finally {
@@ -167,10 +174,10 @@ export default function ChatPage() {
 
           <div className="pt-4 border-t border-zinc-200 dark:border-zinc-800 flex items-center justify-between text-xs text-zinc-500">
             <span className="flex items-center gap-1.5 font-semibold text-zinc-700 dark:text-zinc-300">
-              <User className="w-4 h-4 text-emerald-600" /> Real-time Session
+              <User className="w-4 h-4 text-emerald-600" /> Session Active
             </span>
             <span className="text-[10px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded font-mono font-bold">
-              Test Mode
+              Live
             </span>
           </div>
         </div>
@@ -195,7 +202,7 @@ export default function ChatPage() {
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setShowJsonInspector(!showJsonInspector)}
-                className="text-xs text-zinc-500 hover:text-zinc-900 dark:hover:text-white flex items-center gap-1 font-mono"
+                className="text-xs text-zinc-500 hover:text-zinc-900 dark:hover:text-white flex items-center gap-1 font-mono cursor-pointer"
               >
                 <Code2 className="w-4 h-4" /> {showJsonInspector ? "Hide Payload" : "Inspect Payload"}
               </button>
@@ -210,10 +217,10 @@ export default function ChatPage() {
             <div className="bg-zinc-950 text-emerald-400 p-4 border-b border-zinc-800 font-mono text-xs space-y-2 animate-in slide-in-from-top-2">
               <div className="flex items-center justify-between">
                 <span className="font-bold text-white flex items-center gap-1.5">
-                  <Terminal className="w-4 h-4 text-emerald-400" /> Active Webhook Target:
+                  <Terminal className="w-4 h-4 text-emerald-400" /> Target Webhook Variable (N8N_WEBHOOK_URL):
                 </span>
-                <span className="text-[10px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded">
-                  {lastResponseMeta?.n8nUrl || process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL || "https://emstack.onrender.com/webhook-test/ccfa55ae-10d2-41a7-b582-bd2c646036c7"}
+                <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded">
+                  {lastResponseMeta?.n8nUrl || process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL || "Configured via .env.local"}
                 </span>
               </div>
               <div>
@@ -238,7 +245,7 @@ export default function ChatPage() {
                   {m.sender === "user" ? "U" : <Bot className="w-4 h-4" />}
                 </div>
 
-                <div className="space-y-2 max-w-[85%]">
+                <div className="space-y-2 max-w-[88%]">
                   <div
                     className={`rounded-2xl p-4 text-xs sm:text-sm leading-relaxed ${
                       m.sender === "user"
@@ -246,7 +253,7 @@ export default function ChatPage() {
                         : "bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 rounded-tl-none border border-zinc-200 dark:border-zinc-700/60 shadow-sm"
                     }`}
                   >
-                    <p className="whitespace-pre-wrap">{m.text}</p>
+                    <MarkdownRenderer content={m.text} />
                   </div>
 
                   <span className="text-[10px] text-zinc-400 block px-1">{m.timestamp}</span>
@@ -271,7 +278,7 @@ export default function ChatPage() {
             {loading && (
               <div className="flex items-center gap-3 text-xs text-emerald-600 dark:text-emerald-400 bg-white dark:bg-zinc-800 p-3 rounded-2xl border border-zinc-200 dark:border-zinc-700 w-fit shadow-sm">
                 <RefreshCw className="w-4 h-4 animate-spin" />
-                <span>Dispatching payload to Test Webhook...</span>
+                <span>Adron AI Sales Agent is reasoning and querying live inventory...</span>
               </div>
             )}
             <div ref={chatEndRef} />
@@ -288,7 +295,7 @@ export default function ChatPage() {
             >
               <input
                 type="text"
-                placeholder="Ask about estates, land prices, title verification, or payment plans..."
+                placeholder="Ask about properties, plot sizes, C of O verification, or schedule site inspection..."
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 className="flex-1 bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-white text-xs sm:text-sm px-4 py-3.5 rounded-2xl border border-zinc-200 dark:border-zinc-700 focus:outline-none focus:border-emerald-600 placeholder:text-zinc-400"
@@ -303,7 +310,7 @@ export default function ChatPage() {
             </form>
 
             <p className="text-[10px] text-zinc-400 text-center">
-              Target Webhook: <code className="text-emerald-500 font-mono">https://emstack.onrender.com/webhook-test/ccfa55ae-10d2-41a7-b582-bd2c646036c7</code>
+              Active Environment Webhook: <code className="text-emerald-500 font-mono">N8N_WEBHOOK_URL</code> configured in <code className="text-zinc-300">.env.local</code>
             </p>
           </div>
         </div>

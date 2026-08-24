@@ -1,9 +1,8 @@
 import { N8nChatPayload, N8nChatResponse, EnquiryPayload } from "@/types/property";
 
-const DEFAULT_PROD_WEBHOOK_URL = "https://emstack.onrender.com/webhook-test/ccfa55ae-10d2-41a7-b582-bd2c646036c7";
-
 /**
- * Send chat payload to Webhook with VERBOSE LOGGING and NO MOCK FALLBACK.
+ * Dispatch chat payload to n8n Webhook using process.env.N8N_WEBHOOK_URL.
+ * Parses response body from n8n's "Respond to Webhook" node.
  */
 export async function sendChatToN8n(payload: N8nChatPayload): Promise<{
   response: N8nChatResponse;
@@ -12,15 +11,27 @@ export async function sendChatToN8n(payload: N8nChatPayload): Promise<{
   statusCode?: number;
   rawResponse?: string;
 }> {
-  const webhookUrl = process.env.N8N_WEBHOOK_URL || DEFAULT_PROD_WEBHOOK_URL;
+  const webhookUrl = process.env.N8N_WEBHOOK_URL;
+
+  if (!webhookUrl || webhookUrl.trim() === "") {
+    console.error("❌ ERROR: N8N_WEBHOOK_URL environment variable is not defined in .env.local!");
+    return {
+      response: {
+        output: "⚠️ **Configuration Error**: `N8N_WEBHOOK_URL` is not defined in `.env.local`. Please configure your environment variable.",
+        suggestedActions: ["Check .env.local file"],
+      },
+      isMock: false,
+      n8nUrlUsed: "NOT_CONFIGURED",
+    };
+  }
 
   console.log("\n================ [N8N CHAT DISPATCH START] ================");
-  console.log("🚀 TARGET WEBHOOK URL:", webhookUrl);
+  console.log("🚀 TARGET WEBHOOK URL (from env):", webhookUrl);
   console.log("📦 PAYLOAD SENT TO WEBHOOK:", JSON.stringify(payload, null, 2));
 
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 12000); // 12 second timeout
+    const timeoutId = setTimeout(() => controller.abort(), 20000); // 20 second timeout for AI reasoning
 
     const startTime = Date.now();
     const res = await fetch(webhookUrl, {
@@ -47,10 +58,23 @@ export async function sendChatToN8n(payload: N8nChatPayload): Promise<{
     }
 
     if (res.ok) {
+      // Extract response string from n8n's "Respond to Chat" node output ({ success: true, response: "..." })
+      const aiResponseText =
+        parsedData.response ||
+        parsedData.output ||
+        parsedData.message ||
+        parsedData.text ||
+        (typeof parsedData === "string" ? parsedData : resText);
+
       return {
         response: {
-          output: parsedData.output || parsedData.reply || parsedData.message || parsedData.text || resText,
-          suggestedActions: parsedData.suggestedActions || ["View Properties", "Book Free Tour", "Contact Representative"],
+          output: aiResponseText,
+          suggestedActions: parsedData.suggestedActions || [
+            "Tell me about 300sqm plot",
+            "How do payment plans work?",
+            "Book free site inspection",
+            "Have someone contact me",
+          ],
           relatedPropertyIds: parsedData.relatedPropertyIds,
         },
         isMock: false,
@@ -59,10 +83,10 @@ export async function sendChatToN8n(payload: N8nChatPayload): Promise<{
         rawResponse: resText,
       };
     } else {
-      // Direct N8N Error returned (NO MOCK FALLBACK)
+      // Direct n8n error returned (No mock fallback)
       return {
         response: {
-          output: `⚠️ **n8n Webhook Error (${res.status})**:\n\n\`\`\`json\n${resText}\n\`\`\`\n\n*Hint: Click "Execute workflow" in your n8n canvas first so n8n listens for this test call!*`,
+          output: `⚠️ **n8n Webhook Error (${res.status})**:\n\n\`\`\`json\n${resText}\n\`\`\`\n\n*Hint: If using a Test Webhook URL, click "Execute workflow" in your n8n canvas first so n8n listens for incoming calls!*`,
           suggestedActions: ["Retry Request", "Check n8n Canvas"],
         },
         isMock: false,
@@ -77,8 +101,8 @@ export async function sendChatToN8n(payload: N8nChatPayload): Promise<{
 
     return {
       response: {
-        output: `⚠️ **Connection Error calling n8n Webhook**:\n\`${error?.message || "Fetch Failed"}\`\n\nTarget URL: \`${webhookUrl}\``,
-        suggestedActions: ["Check Network", "Verify Webhook URL"],
+        output: `⚠️ **Connection Error calling n8n Webhook**:\n\`${error?.message || "Fetch Failed"}\`\n\nTarget Environment URL: \`${webhookUrl}\``,
+        suggestedActions: ["Check Network", "Verify N8N_WEBHOOK_URL in .env.local"],
       },
       isMock: false,
       n8nUrlUsed: webhookUrl,
@@ -88,7 +112,7 @@ export async function sendChatToN8n(payload: N8nChatPayload): Promise<{
 }
 
 /**
- * Send property enquiry to lead generation workflow with VERBOSE LOGGING
+ * Dispatch property enquiry to lead generation workflow using process.env.N8N_ENQUIRY_WEBHOOK_URL.
  */
 export async function sendEnquiryToN8n(payload: EnquiryPayload): Promise<{
   success: boolean;
@@ -97,10 +121,18 @@ export async function sendEnquiryToN8n(payload: EnquiryPayload): Promise<{
   statusCode?: number;
   rawResponse?: string;
 }> {
-  const webhookUrl = process.env.N8N_ENQUIRY_WEBHOOK_URL || process.env.N8N_WEBHOOK_URL || DEFAULT_PROD_WEBHOOK_URL;
+  const webhookUrl = process.env.N8N_ENQUIRY_WEBHOOK_URL || process.env.N8N_WEBHOOK_URL;
+
+  if (!webhookUrl || webhookUrl.trim() === "") {
+    return {
+      success: false,
+      message: "N8N_ENQUIRY_WEBHOOK_URL is not configured in .env.local",
+      isMock: false,
+    };
+  }
 
   console.log("\n================ [N8N ENQUIRY DISPATCH START] ================");
-  console.log("🚀 TARGET WEBHOOK URL:", webhookUrl);
+  console.log("🚀 TARGET WEBHOOK URL (from env):", webhookUrl);
   console.log("📦 PAYLOAD SENT TO WEBHOOK:", JSON.stringify(payload, null, 2));
 
   try {
