@@ -1,5 +1,5 @@
 {
-  "name": "Adron Homes Autonomous 5-Tool AI Real Estate Sales Workflow",
+  "name": "Adron Homes Autonomous 5-Tool AI Real Estate Sales Workflow (Production Ready)",
   "nodes": [
     {
       "parameters": {
@@ -30,8 +30,8 @@
     {
       "parameters": {
         "httpMethod": "POST",
-        "path": "adron-chat",
-        "responseMode": "lastNode",
+        "path": "adron-ai-chat",
+        "responseMode": "responseNode",
         "options": {}
       },
       "id": "node_webhook_chat",
@@ -52,13 +52,7 @@
       "name": "Gmail - Alert Sales Team",
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2,
-      "position": [400, 150],
-      "credentials": {
-        "gmailOAuth2": {
-          "id": "gmail_credentials_id",
-          "name": "Adron Gmail Account"
-        }
-      }
+      "position": [400, 150]
     },
     {
       "parameters": {
@@ -70,13 +64,7 @@
       "name": "Slack - Notify #leads-adron-sales",
       "type": "n8n-nodes-base.slack",
       "typeVersion": 1,
-      "position": [400, 280],
-      "credentials": {
-        "slackApi": {
-          "id": "slack_credentials_id",
-          "name": "Adron Slack Bot"
-        }
-      }
+      "position": [400, 280]
     },
     {
       "parameters": {
@@ -90,13 +78,7 @@
       "name": "Google Sheets - Log Enquiries (Master Sheet 1)",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4,
-      "position": [400, 410],
-      "credentials": {
-        "googleSheetsOAuth2": {
-          "id": "google_sheets_credentials_id",
-          "name": "Adron Google Sheets Account"
-        }
-      }
+      "position": [400, 410]
     },
     {
       "parameters": {
@@ -110,13 +92,7 @@
       "name": "Gmail - Alert VIP Subscriptions Team",
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2,
-      "position": [400, 480],
-      "credentials": {
-        "gmailOAuth2": {
-          "id": "gmail_credentials_id",
-          "name": "Adron Gmail Account"
-        }
-      }
+      "position": [400, 480]
     },
     {
       "parameters": {
@@ -128,13 +104,7 @@
       "name": "Slack - Notify #subscriptions-vip",
       "type": "n8n-nodes-base.slack",
       "typeVersion": 1,
-      "position": [400, 610],
-      "credentials": {
-        "slackApi": {
-          "id": "slack_credentials_id",
-          "name": "Adron Slack Bot"
-        }
-      }
+      "position": [400, 610]
     },
     {
       "parameters": {
@@ -148,13 +118,7 @@
       "name": "Google Sheets - Log Subscriptions (SEPARATE Sheet 2)",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4,
-      "position": [400, 740],
-      "credentials": {
-        "googleSheetsOAuth2": {
-          "id": "google_sheets_credentials_id",
-          "name": "Adron Google Sheets Account"
-        }
-      }
+      "position": [400, 740]
     },
     {
       "parameters": {
@@ -167,13 +131,7 @@
       "name": "Google Gemini 1.5 Pro Model",
       "type": "n8n-nodes-langchain.lmChatGoogleGemini",
       "typeVersion": 1,
-      "position": [300, 1250],
-      "credentials": {
-        "googlePalmApi": {
-          "id": "gemini_api_key_credentials",
-          "name": "Google Gemini API Key"
-        }
-      }
+      "position": [300, 1250]
     },
     {
       "parameters": {
@@ -184,20 +142,14 @@
       "name": "MongoDB Chat Memory",
       "type": "n8n-nodes-langchain.memoryMongoDbChat",
       "typeVersion": 1,
-      "position": [450, 1250],
-      "credentials": {
-        "mongoDb": {
-          "id": "mongodb_atlas_credentials",
-          "name": "MongoDB Atlas Chat Memory"
-        }
-      }
+      "position": [450, 1250]
     },
     {
       "parameters": {
         "name": "search_properties_api",
         "description": "TOOL 1: Search Adron Homes properties catalog by maximum budget (maxPrice), location, state, or property type. Returns array of matching properties with prices, C of O titles, and image thumbnail URLs.",
         "method": "GET",
-        "url": "http://localhost:3000/api/properties",
+        "url": "https://adron-homes-prototype.vercel.app/api/properties",
         "sendQuery": true,
         "queryParameters": {
           "parameters": [
@@ -223,7 +175,7 @@
         "name": "get_property_details_api",
         "description": "TOOL 2: Get detailed plot breakdown (300sqm half plot / 500sqm full plot), legal title verification, and payment plans for a specific property by ID or slug.",
         "method": "GET",
-        "url": "=http://localhost:3000/api/properties/{{ $fromAI('propertyId', 'Property ID or slug, e.g. eko-city-shimawa') }}"
+        "url": "=https://adron-homes-prototype.vercel.app/api/properties/{{ $fromAI('propertyId', 'Property ID or slug, e.g. eko-city-shimawa') }}"
       },
       "id": "node_tool_details",
       "name": "Tool 2 — Get Property Details API",
@@ -236,7 +188,7 @@
         "name": "faq_knowledgebase_api",
         "description": "TOOL 3: Fetch official Adron Homes FAQ & Knowledgebase answers regarding 36-month flexible installment plans, legal C of O title verification, and site inspection pickup locations.",
         "method": "GET",
-        "url": "http://localhost:3000/api/faq"
+        "url": "https://adron-homes-prototype.vercel.app/api/faq"
       },
       "id": "node_tool_faq",
       "name": "Tool 3 — FAQ Knowledgebase API",
@@ -249,7 +201,7 @@
         "name": "create_lead_api",
         "description": "TOOL 4: Create a sales callback lead when a user says 'I am interested, have someone contact me' or requests a sales representative call.",
         "method": "POST",
-        "url": "http://localhost:3000/api/enquiry",
+        "url": "https://adron-homes-prototype.vercel.app/api/enquiry",
         "sendBody": true,
         "bodyParameters": {
           "parameters": [
@@ -279,7 +231,7 @@
         "name": "schedule_inspection_api",
         "description": "TOOL 5: Schedule or book a free daily site tour inspection when a user says 'I would like to inspect the property tomorrow' or selects a tour date.",
         "method": "POST",
-        "url": "http://localhost:3000/api/enquiry",
+        "url": "https://adron-homes-prototype.vercel.app/api/enquiry",
         "sendBody": true,
         "bodyParameters": {
           "parameters": [
@@ -309,7 +261,7 @@
         "promptType": "define",
         "text": "={{ $json.body.message }}",
         "options": {
-          "systemMessage": "You are Adron AI, the executive real estate consultant & sales agent for Adron Homes & Properties Nigeria.\n\nYou possess 5 specialized tools:\n1. 'search_properties_api': Use when user asks for properties matching a budget (e.g. ₦20 Million, ₦15 Million) or location.\n2. 'get_property_details_api': Use when user asks for plot details (e.g. 300sqm half plot, 500sqm full plot, features).\n3. 'faq_knowledgebase_api': Use when user asks about installment payment terms, C of O legal titles, or physical allocation.\n4. 'create_lead_api': Use when user says 'I am interested, have someone contact me'.\n5. 'schedule_inspection_api': Use when user says 'I would like to inspect property tomorrow' or asks for site tours.\n\nALWAYS format property listings cleanly with pricing, C of O title, and markdown image thumbnail URLs ![Image](url)."
+          "systemMessage": "You are Adron AI, executive real estate consultant for Adron Homes & Properties Nigeria.\n\nYou possess 5 specialized HTTP tools:\n1. 'search_properties_api': Use when user asks for properties matching a budget or location.\n2. 'get_property_details_api': Use when user asks for plot details (300sqm half plot, 500sqm full plot).\n3. 'faq_knowledgebase_api': Use when user asks about 36-month payment terms, C of O titles, or site tours.\n4. 'create_lead_api': Use when user says 'have someone contact me'.\n5. 'schedule_inspection_api': Use when user says 'inspect property tomorrow'.\n\nALWAYS format property listings cleanly with prices, C of O title, and markdown images ![Image](url)."
         }
       },
       "id": "node_ai_agent",
@@ -320,13 +272,27 @@
     },
     {
       "parameters": {
-        "jsCode": "const agentOutput = $input.first().json.output || $input.first().json.text || 'Thank you for consulting Adron Homes!';\n\nreturn {\n  json: {\n    output: agentOutput,\n    suggestedActions: [\n      'Tell me about 300sqm plot',\n      'Do you offer installments?',\n      'Have someone contact me',\n      'Inspect property tomorrow'\n    ],\n    meta: {\n      engine: 'n8n 5-Tool Autonomous AI Sales Agent',\n      llm: 'Google Gemini 1.5 Pro',\n      memory: 'MongoDB Atlas'\n    }\n  }\n};"
+        "jsCode": "const agentOutput = $input.first().json.output || $input.first().json.text || $input.first().json.response || 'Hello! Welcome to Adron Homes. How can I assist you with land plots or payment plans?';\n\nreturn {\n  json: {\n    success: true,\n    sessionId: $('3. Webhook - AI Chatbot Query').item.json.body.sessionId,\n    output: agentOutput,\n    suggestedActions: [\n      'Tell me about 300sqm plot',\n      'Do you offer installments?',\n      'Book free site inspection'\n    ]\n  }\n};"
       },
       "id": "node_format_response",
       "name": "Format JSON Chat Response",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [700, 900]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { success: true, sessionId: $('3. Webhook - AI Chatbot Query').item.json.body.sessionId, output: $json.output } }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "node_respond_to_webhook",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [950, 900]
     }
   ],
   "connections": {
@@ -410,15 +376,22 @@
           { "node": "Format JSON Chat Response", "type": "main", "index": 0 }
         ]
       ]
+    },
+    "Format JSON Chat Response": {
+      "main": [
+        [
+          { "node": "Respond to Webhook", "type": "main", "index": 0 }
+        ]
+      ]
     }
   },
   "active": true,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "adron_5tool_prod_workflow_v2",
+  "versionId": "adron_5tool_prod_workflow_v3",
   "meta": {
     "templateId": "adron_homes_5tool_ai_sales_agent",
-    "description": "5-Tool Autonomous AI Real Estate Sales Agent workflow for Adron Homes: Property Search, Plot Details, FAQ Knowledgebase, Lead Creation, and Site Tour Inspection Booking."
+    "description": "5-Tool Autonomous AI Real Estate Sales Agent workflow with explicit Respond to Webhook node."
   }
 }

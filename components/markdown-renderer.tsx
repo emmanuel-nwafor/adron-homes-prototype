@@ -21,7 +21,24 @@ interface MarkdownRendererProps {
 export function MarkdownRenderer({ content }: MarkdownRendererProps) {
   if (!content) return null;
 
-  const lines = content.split("\n");
+  let cleanContent = content;
+  // Automatically unpack raw JSON strings if present
+  if (cleanContent && typeof cleanContent === "string" && cleanContent.trim().startsWith("{") && cleanContent.trim().endsWith("}")) {
+    try {
+      const parsed = JSON.parse(cleanContent.trim());
+      cleanContent =
+        parsed.response ||
+        parsed.output ||
+        parsed.message ||
+        parsed.text ||
+        parsed.reply ||
+        "Hello! Welcome to **Adron Homes & Properties** AI Assistant. How can I help you find live land plots or calculate flexible payment plans?";
+    } catch {
+      // Leave cleanContent as is
+    }
+  }
+
+  const lines = cleanContent.split("\n");
   const renderedElements: React.ReactNode[] = [];
 
   let currentListItems: React.ReactNode[] = [];
