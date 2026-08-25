@@ -9,7 +9,6 @@ import {
   Bot,
   Building2,
   Calendar,
-  Code2,
   CreditCard,
   Home,
   Plus,
@@ -17,7 +16,6 @@ import {
   Search,
   Send,
   Sparkles,
-  Terminal,
   User,
 } from "lucide-react";
 
@@ -26,9 +24,6 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [lastPayloadSent, setLastPayloadSent] = useState<N8nChatPayload | null>(null);
-  const [lastResponseMeta, setLastResponseMeta] = useState<any>(null);
-  const [showJsonInspector, setShowJsonInspector] = useState(false);
 
   const chatEndRef = useRef<HTMLDivElement>(null);
 
@@ -84,8 +79,6 @@ export default function ChatPage() {
       userContext: { device: "Next.js Chat Page" },
     };
 
-    setLastPayloadSent(payload);
-
     try {
       const res = await fetch("/api/chat", {
         method: "POST",
@@ -94,7 +87,6 @@ export default function ChatPage() {
       });
 
       const json = await res.json();
-      setLastResponseMeta(json.meta);
 
       const responseText =
         json.data?.output ||
@@ -179,10 +171,7 @@ export default function ChatPage() {
               </div>
               <div>
                 <h3 className="font-bold text-xs sm:text-sm text-zinc-950 dark:text-white font-aclonica flex items-center gap-2">
-                  Adron AI Workspace
-                  <span className="text-[10px] bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded-full font-mono font-bold">
-                    Gemini Engine
-                  </span>
+                  AdBot Workspace
                 </h3>
                 <p className="text-[10px] text-zinc-500 dark:text-zinc-400 font-mono">
                   Session: {activeSessionId ? activeSessionId.substring(0, 16) : "Connecting..."}
@@ -208,37 +197,11 @@ export default function ChatPage() {
                 <span className="hidden sm:inline">WhatsApp</span>
               </a>
 
-              <button
-                onClick={() => setShowJsonInspector(!showJsonInspector)}
-                className="text-xs text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-white flex items-center gap-1 font-mono cursor-pointer"
-              >
-                <Code2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /> {showJsonInspector ? "Hide Payload" : "Inspect Payload"}
-              </button>
               <Link href="/properties" className="text-xs text-emerald-600 dark:text-emerald-400 font-bold hover:underline hidden sm:inline">
                 Explore Estates &rarr;
               </Link>
             </div>
           </header>
-
-          {/* JSON Inspector Panel */}
-          {showJsonInspector && (
-            <div className="bg-zinc-100 dark:bg-zinc-950 text-emerald-700 dark:text-emerald-400 p-4 border-b border-zinc-200 dark:border-zinc-800 font-mono text-xs space-y-2 animate-in slide-in-from-top-2 shrink-0 z-20">
-              <div className="flex items-center justify-between">
-                <span className="font-bold text-zinc-900 dark:text-white flex items-center gap-1.5">
-                  <Terminal className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /> Target Environment Variable:
-                </span>
-                <span className="text-[10px] bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 px-2 py-0.5 rounded">
-                  {lastResponseMeta?.n8nUrl || process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL || "N8N_WEBHOOK_URL"}
-                </span>
-              </div>
-              <div>
-                <span className="text-zinc-500 dark:text-zinc-400 block mb-1">Last Outgoing JSON Body:</span>
-                <pre className="bg-zinc-200 dark:bg-zinc-900 p-2.5 rounded border border-zinc-300 dark:border-zinc-800 text-[11px] overflow-x-auto text-zinc-900 dark:text-emerald-400">
-                  {lastPayloadSent ? JSON.stringify(lastPayloadSent, null, 2) : "// Awaiting prompt submission..."}
-                </pre>
-              </div>
-            </div>
-          )}
 
           {/* Middle Scrollable Chat Stream (Mouse wheel & Touchpad scrolling enabled via data-lenis-prevent) */}
           <div
@@ -260,7 +223,7 @@ export default function ChatPage() {
                 {/* Hero Greeting Typography */}
                 <div className="space-y-2 max-w-xl">
                   <h1 className="text-2xl sm:text-4xl font-extrabold text-zinc-950 dark:text-white font-aclonica tracking-tight">
-                    Hi, Welcome to Adron AI
+                    Hi, Welcome to AdBot
                   </h1>
                   <h2 className="text-xl sm:text-3xl font-bold text-zinc-700 dark:text-zinc-300">
                     How can I help today?
@@ -353,7 +316,7 @@ export default function ChatPage() {
                 {loading && (
                   <div className="flex items-center gap-3 text-xs text-emerald-600 dark:text-emerald-400 bg-white dark:bg-zinc-900 p-3.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 w-fit shadow-md animate-pulse">
                     <RefreshCw className="w-4 h-4 animate-spin" />
-                    <span>Adron AI Agent is reasoning & querying live inventory...</span>
+                    <span>AdBot is reasoning & querying live inventory...</span>
                   </div>
                 )}
                 <div ref={chatEndRef} />

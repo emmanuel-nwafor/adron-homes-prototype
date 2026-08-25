@@ -18,8 +18,8 @@ export function ChatWidget({ initialPropertyTitle, initialPropertyId }: ChatWidg
       id: "msg_welcome",
       sender: "assistant",
       text: initialPropertyTitle
-        ? `Hello! I am your Adron AI Assistant. How can I help you regarding **${initialPropertyTitle}**?`
-        : "Hello! Welcome to **Adron Homes & Properties** AI Assistant. Ask me about land prices, 36-month flexible payment plans, or site inspection bookings!",
+        ? `Hello! I am **AdBot**. How can I help you regarding **${initialPropertyTitle}**?`
+        : "Hello! Welcome to **Adron Homes & Properties**. I am **AdBot**, your AI Assistant. Ask me about land prices, 36-month flexible payment plans, or site inspection bookings!",
       timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       suggestedActions: initialPropertyTitle
         ? ["Show Payment Breakdown", "Book Inspection", "Title Verification"]
@@ -125,7 +125,7 @@ export function ChatWidget({ initialPropertyTitle, initialPropertyId }: ChatWidg
               </div>
               <div>
                 <h4 className="font-bold text-white text-sm font-aclonica flex items-center gap-2">
-                  Adron AI Assistant
+                  AdBot Assistant
                 </h4>
                 <p className="text-[11px] text-emerald-400 flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
@@ -204,7 +204,7 @@ export function ChatWidget({ initialPropertyTitle, initialPropertyId }: ChatWidg
             {loading && (
               <div className="flex items-center gap-2 text-xs text-emerald-600 dark:text-emerald-400 bg-white dark:bg-zinc-900 p-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 w-fit">
                 <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                <span>AI Agent is generating response...</span>
+                <span>AdBot is generating response...</span>
               </div>
             )}
 
@@ -248,7 +248,7 @@ export function ChatWidget({ initialPropertyTitle, initialPropertyId }: ChatWidg
           <Bot className="w-6 h-6" />
           <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-400 rounded-full border border-zinc-950 animate-ping" />
         </div>
-        <span className="text-sm font-extrabold hidden sm:inline font-aclonica">Adron AI Support</span>
+        <span className="text-sm font-extrabold hidden sm:inline font-aclonica">AdBot Support</span>
       </button>
     </div>
   );

@@ -149,7 +149,7 @@ async function extractHumanText(parsedData: any, rawText: string, userMessage?: 
       return reply;
     }
 
-    return "Hello! Welcome to **Adron Homes & Properties**. I am your automated AI Assistant.\n\nI can help you with:\n* 🏡 **Finding Estates**: Lagos, Ogun, Abuja, Oyo\n* 💰 **Promotions**: Ongoing up to 50% discount offers\n* 💳 **Payment Calculator**: Daily & monthly flexible plans\n* 🚌 **Site Inspections**: Booking a free physical tour";
+    return "Hello! Welcome to **Adron Homes & Properties**. I am **AdBot**, your AI Assistant.\n\nI can help you with:\n* 🏡 **Finding Estates**: Lagos, Ogun, Abuja, Oyo\n* 💰 **Promotions**: Ongoing up to 50% discount offers\n* 💳 **Payment Calculator**: Daily & monthly flexible plans\n* 🚌 **Site Inspections**: Booking a free physical tour";
   }
 
   return rawText;

@@ -48,7 +48,7 @@ export function Navbar() {
                 href="/chat"
                 className="text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 font-semibold transition-colors flex items-center gap-1.5 bg-emerald-500/10 px-3.5 py-1.5 rounded-full border border-emerald-500/20"
               >
-                <Bot className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /> AI Assistant
+                <Bot className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /> AdBot
               </Link>
             </nav>
 
@@ -107,7 +107,7 @@ export function Navbar() {
               onClick={() => setMobileMenuOpen(false)}
               className="block py-2 text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-2 font-aclonica"
             >
-              <Bot className="w-5 h-5" /> Adron AI Assistant
+              <Bot className="w-5 h-5" /> AdBot Assistant
             </Link>
             <button
               onClick={() => {
