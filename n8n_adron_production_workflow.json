@@ -22,7 +22,7 @@
         "options": {}
       },
       "id": "node_webhook_subscribe",
-      "name": "2. Webhook - VIP Subscription",
+      "name": "2. Webhook - Subscription",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 1,
       "position": [100, 500]
@@ -83,25 +83,25 @@
     {
       "parameters": {
         "sendTo": "subscriptions@adronhomesproperties.com",
-        "subject": "=🎉 VIP ESTATE SUBSCRIPTION: {{ $json.body.title || '' }} {{ $json.body.fullName }} - {{ $json.body.propertyTitle }}",
+        "subject": "=🎉 NEW ESTATE SUBSCRIPTION: {{ $json.body.title || '' }} {{ $json.body.fullName }} - {{ $json.body.propertyTitle }}",
         "emailType": "html",
-        "message": "=<h2>🎉 VIP Estate Subscription Record</h2><p><strong>Subscriber:</strong> {{ $json.body.title || '' }} {{ $json.body.fullName }}</p><p><strong>Phone:</strong> {{ $json.body.phone }}</p><p><strong>Email:</strong> {{ $json.body.email }}</p><p><strong>Estate Subscribed:</strong> {{ $json.body.propertyTitle }}</p><p><strong>Referred by Marketer:</strong> {{ $json.body.referredByMarketer ? 'YES' : 'NO' }}</p><hr/><p><em>Transmitted to Adron Subscriptions Management.</em></p>",
+        "message": "=<h2>🎉 New Estate Subscription Record</h2><p><strong>Subscriber:</strong> {{ $json.body.title || '' }} {{ $json.body.fullName }}</p><p><strong>Phone:</strong> {{ $json.body.phone }}</p><p><strong>Email:</strong> {{ $json.body.email }}</p><p><strong>Estate Subscribed:</strong> {{ $json.body.propertyTitle }}</p><p><strong>Referred by Marketer:</strong> {{ $json.body.referredByMarketer ? 'YES' : 'NO' }}</p><hr/><p><em>Transmitted to Adron Subscriptions Management.</em></p>",
         "options": {}
       },
       "id": "node_gmail_subscribe",
-      "name": "Gmail - Alert VIP Subscriptions Team",
+      "name": "Gmail - Alert Subscriptions Team",
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2,
       "position": [400, 480]
     },
     {
       "parameters": {
-        "channel": "#subscriptions-vip",
+        "channel": "#subscriptions",
         "text": "=🎉 *NEW ESTATE SUBSCRIPTION RECORDED*\n*Subscriber:* {{ $json.body.title || '' }} {{ $json.body.fullName }}\n*Phone:* {{ $json.body.phone }}\n*Email:* {{ $json.body.email }}\n*Estate:* {{ $json.body.propertyTitle }}\n*Referred by Marketer:* {{ $json.body.referredByMarketer ? 'YES' : 'NO' }}",
         "otherOptions": {}
       },
       "id": "node_slack_subscribe",
-      "name": "Slack - Notify #subscriptions-vip",
+      "name": "Slack - Notify #subscriptions",
       "type": "n8n-nodes-base.slack",
       "typeVersion": 1,
       "position": [400, 610]
@@ -305,11 +305,11 @@
         ]
       ]
     },
-    "2. Webhook - VIP Subscription": {
+    "2. Webhook - Subscription": {
       "main": [
         [
-          { "node": "Gmail - Alert VIP Subscriptions Team", "type": "main", "index": 0 },
-          { "node": "Slack - Notify #subscriptions-vip", "type": "main", "index": 0 },
+          { "node": "Gmail - Alert Subscriptions Team", "type": "main", "index": 0 },
+          { "node": "Slack - Notify #subscriptions", "type": "main", "index": 0 },
           { "node": "Google Sheets - Log Subscriptions (SEPARATE Sheet 2)", "type": "main", "index": 0 }
         ]
       ]
@@ -389,9 +389,9 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "adron_5tool_prod_workflow_v3",
+  "versionId": "adron_5tool_prod_workflow_v4",
   "meta": {
     "templateId": "adron_homes_5tool_ai_sales_agent",
-    "description": "5-Tool Autonomous AI Real Estate Sales Agent workflow with explicit Respond to Webhook node."
+    "description": "5-Tool Autonomous AI Real Estate Sales Agent workflow with clean subscription trigger."
   }
 }
