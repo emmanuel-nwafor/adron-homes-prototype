@@ -4,7 +4,7 @@
     {
       "parameters": {
         "httpMethod": "POST",
-        "path": "adron-enquiry",
+        "path": "adron-lead-ai",
         "responseMode": "onReceived",
         "options": {}
       },

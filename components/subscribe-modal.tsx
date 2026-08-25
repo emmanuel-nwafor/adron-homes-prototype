@@ -55,6 +55,7 @@ export function SubscribeModal({ property, isOpen, onClose }: SubscribeModalProp
           propertyTitle: property?.name || "Adron Homes Subscription",
           message: `Subscription lead for ${estateName}. Referred by marketer: ${referredByMarketer}`,
           leadSource: "Adron Web Prototype Subscription",
+          subscribeWebhookUrl: process.env.NEXT_PUBLIC_N8N_SUBSCRIBE_WEBHOOK_URL || "https://emstack.onrender.com/webhook/adron-lead-ai",
         }),
       });
 

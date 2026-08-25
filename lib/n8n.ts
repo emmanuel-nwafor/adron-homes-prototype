@@ -276,12 +276,16 @@ export async function sendEnquiryToN8n(payload: EnquiryPayload & { sessionId?: s
   statusCode?: number;
   rawResponse?: string;
 }> {
-  const webhookUrl = process.env.N8N_ENQUIRY_WEBHOOK_URL || process.env.N8N_WEBHOOK_URL;
+  const webhookUrl =
+    process.env.NEXT_PUBLIC_N8N_SUBSCRIBE_WEBHOOK_URL ||
+    process.env.N8N_SUBSCRIBE_WEBHOOK_URL ||
+    process.env.N8N_ENQUIRY_WEBHOOK_URL ||
+    process.env.N8N_WEBHOOK_URL;
 
   if (!webhookUrl || webhookUrl.trim() === "") {
     return {
       success: false,
-      message: "N8N_ENQUIRY_WEBHOOK_URL is not configured in .env.local",
+      message: "N8N_SUBSCRIBE_WEBHOOK_URL / NEXT_PUBLIC_N8N_SUBSCRIBE_WEBHOOK_URL is not configured in .env.local",
       isMock: false,
     };
   }
