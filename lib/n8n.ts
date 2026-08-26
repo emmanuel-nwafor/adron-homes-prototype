@@ -24,133 +24,169 @@ function parseBudgetFromMessage(text: string): number | null {
 }
 
 /**
+ * Recursively inspects any object, array, or wrapper returned by n8n to find human-readable text.
+ * Handles top-level objects, arrays, wrapper keys (.json, .body, .data), and standard n8n outputs.
+ */
+function findTextInN8nResponse(data: any): string | null {
+  if (!data) return null;
+
+  if (typeof data === "string") {
+    const trimmed = data.trim();
+    if (!trimmed) return null;
+    if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
+      try {
+        const parsed = JSON.parse(trimmed);
+        return findTextInN8nResponse(parsed);
+      } catch {
+        return trimmed;
+      }
+    }
+    return trimmed;
+  }
+
+  if (Array.isArray(data)) {
+    for (const item of data) {
+      const found = findTextInN8nResponse(item);
+      if (found) return found;
+    }
+    return null;
+  }
+
+  if (typeof data === "object") {
+    // 1. Check direct output/response keys
+    const priorityKeys = ["output", "response", "text", "message", "reply", "content", "result", "fulfillmentText"];
+    for (const key of priorityKeys) {
+      if (data[key]) {
+        const found = findTextInN8nResponse(data[key]);
+        if (found) return found;
+      }
+    }
+
+    // 2. Check wrapper objects like .json, .data, .body, .item, .payload
+    const wrapperKeys = ["json", "data", "body", "item", "payload"];
+    for (const key of wrapperKeys) {
+      if (data[key]) {
+        const found = findTextInN8nResponse(data[key]);
+        if (found) return found;
+      }
+    }
+
+    // 3. Fallback: check any string property in the object (excluding system fields)
+    for (const key of Object.keys(data)) {
+      if (["sessionId", "id", "status", "success", "type", "typeVersion"].includes(key)) continue;
+      const val = data[key];
+      if (typeof val === "string" && val.trim().length > 0) {
+        return val.trim();
+      }
+    }
+  }
+
+  return null;
+}
+
+/**
  * Safely extracts human-readable text from n8n JSON responses or fallback payloads.
  * Prevents raw JSON strings or empty objects like {"success":true,"sessionId":"..."} from leaking into the UI.
  */
 async function extractHumanText(parsedData: any, rawText: string, userMessage?: string): Promise<string> {
-  if (!parsedData) return rawText;
-
-  // If parsedData is a string, check if it's JSON
-  if (typeof parsedData === "string") {
-    const trimmed = parsedData.trim();
-    if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
-      try {
-        const obj = JSON.parse(trimmed);
-        return extractHumanText(obj, rawText, userMessage);
-      } catch {
-        return parsedData;
-      }
+  if (parsedData) {
+    const extracted = findTextInN8nResponse(parsedData);
+    if (extracted && extracted.trim().length > 0) {
+      return extracted;
     }
-    return parsedData;
   }
 
-  if (typeof parsedData === "object" && parsedData !== null) {
-    // Check candidate response fields from n8n
-    const candidates = [
-      parsedData.response,
-      parsedData.output,
-      parsedData.message,
-      parsedData.text,
-      parsedData.reply,
-      parsedData.data?.output,
-      parsedData.data?.response,
-      parsedData.data?.message,
-    ];
+  if (rawText && rawText.trim().length > 0) {
+    const extracted = findTextInN8nResponse(rawText);
+    if (extracted && extracted.trim().length > 0) {
+      return extracted;
+    }
+  }
 
-    for (const cand of candidates) {
-      if (typeof cand === "string" && cand.trim().length > 0) {
-        return cand;
-      }
+  // If n8n returned empty response or fetch failed, generate intelligent fallback
+  if (userMessage) {
+    const budget = parseBudgetFromMessage(userMessage);
+    const lower = userMessage.toLowerCase();
+    const { properties } = await fetchAllProperties();
+
+    // 1. Featured Estates Request
+    if (lower.includes("feature") || lower.includes("popular") || lower.includes("top")) {
+      const featured = properties.filter((p) => p.featured);
+      let reply = "Here are our top **Featured Adron Homes Estates**:\n\n";
+      featured.forEach((p) => {
+        const price = p.promoStartingPrice || p.startingPrice;
+        const priceFormatted = new Intl.NumberFormat("en-NG", { style: "currency", currency: "NGN", maximumFractionDigits: 0 }).format(price);
+        reply += `* 🏡 **${p.name}** (${p.location}, ${p.state})\n`;
+        reply += `  - **Starting Price**: ${priceFormatted} (${p.discountPercentage ? `${p.discountPercentage}% Promo Discount` : "Special Offer"})\n`;
+        reply += `  - **Title Document**: ${p.titleDocument}\n`;
+        reply += `  - **36-Month Plan**: Available with initial deposit from ₦${(p.minInitialDeposit / 1000000).toFixed(1)}M\n`;
+        if (p.images && p.images[0]) {
+          reply += `  ![${p.name}](${p.images[0]})\n`;
+        }
+        reply += `\n`;
+      });
+      reply += "Would you like to calculate a 36-month flexible payment plan or book a free site tour?";
+      return reply;
     }
 
-    // If n8n returned {"success": true, "sessionId": "..."} without any text field
-    // Generate intelligent live real-estate answer based on user prompt!
-    if (userMessage) {
-      const budget = parseBudgetFromMessage(userMessage);
-      const lower = userMessage.toLowerCase();
-      const { properties } = await fetchAllProperties();
+    // 2. Specific Budget Match Request
+    if (budget && budget > 0) {
+      const formattedBudget = new Intl.NumberFormat("en-NG", { style: "currency", currency: "NGN", maximumFractionDigits: 0 }).format(budget);
+      const matching = properties.filter((p) => (p.promoStartingPrice || p.startingPrice) <= budget);
 
-      // 1. Featured Estates Request
-      if (lower.includes("feature") || lower.includes("popular") || lower.includes("top")) {
-        const featured = properties.filter((p) => p.featured);
-        let reply = "Here are our top **Featured Adron Homes Estates**:\n\n";
-        featured.forEach((p) => {
+      if (matching.length > 0) {
+        let reply = `With your budget of **${formattedBudget}**, here are top verified **Adron Homes Estates** you can acquire:\n\n`;
+        matching.forEach((p) => {
           const price = p.promoStartingPrice || p.startingPrice;
           const priceFormatted = new Intl.NumberFormat("en-NG", { style: "currency", currency: "NGN", maximumFractionDigits: 0 }).format(price);
+          const plotsCount = Math.floor(budget / price);
+
           reply += `* 🏡 **${p.name}** (${p.location}, ${p.state})\n`;
-          reply += `  - **Starting Price**: ${priceFormatted} (${p.discountPercentage ? `${p.discountPercentage}% Promo Discount` : "Special Offer"})\n`;
-          reply += `  - **Title Document**: ${p.titleDocument}\n`;
+          reply += `  - **Price**: ${priceFormatted} (${p.discountPercentage ? `${p.discountPercentage}% Discount` : "Promo"})\n`;
+          reply += `  - **Title**: ${p.titleDocument}\n`;
+          if (plotsCount > 1) {
+            reply += `  - **Capacity**: Your budget can buy **${plotsCount} plots** outright!\n`;
+          }
           reply += `  - **36-Month Plan**: Available with initial deposit from ₦${(p.minInitialDeposit / 1000000).toFixed(1)}M\n`;
           if (p.images && p.images[0]) {
             reply += `  ![${p.name}](${p.images[0]})\n`;
           }
           reply += `\n`;
         });
-        reply += "Would you like to calculate a 36-month flexible payment plan or book a free site tour?";
         return reply;
+      } else {
+        return `With a budget of **${formattedBudget}**, you can easily make an initial deposit on our luxury prime estates like **Town Park & Gardens (Ibeju-Lekki)** or **Eko City (Shimawa)** and spread the remaining balance over **36 flexible monthly installments**!\n\nWould you like to calculate a 36-month payment breakdown or book a free site tour?`;
       }
-
-      // 2. Specific Budget Match Request
-      if (budget && budget > 0) {
-        const formattedBudget = new Intl.NumberFormat("en-NG", { style: "currency", currency: "NGN", maximumFractionDigits: 0 }).format(budget);
-        const matching = properties.filter((p) => (p.promoStartingPrice || p.startingPrice) <= budget);
-
-        if (matching.length > 0) {
-          let reply = `With your budget of **${formattedBudget}**, here are top verified **Adron Homes Estates** you can acquire:\n\n`;
-          matching.forEach((p) => {
-            const price = p.promoStartingPrice || p.startingPrice;
-            const priceFormatted = new Intl.NumberFormat("en-NG", { style: "currency", currency: "NGN", maximumFractionDigits: 0 }).format(price);
-            const plotsCount = Math.floor(budget / price);
-
-            reply += `* 🏡 **${p.name}** (${p.location}, ${p.state})\n`;
-            reply += `  - **Price**: ${priceFormatted} (${p.discountPercentage ? `${p.discountPercentage}% Discount` : "Promo"})\n`;
-            reply += `  - **Title**: ${p.titleDocument}\n`;
-            if (plotsCount > 1) {
-              reply += `  - **Capacity**: Your budget can buy **${plotsCount} plots** outright!\n`;
-            }
-            reply += `  - **36-Month Plan**: Available with initial deposit from ₦${(p.minInitialDeposit / 1000000).toFixed(1)}M\n`;
-            if (p.images && p.images[0]) {
-              reply += `  ![${p.name}](${p.images[0]})\n`;
-            }
-            reply += `\n`;
-          });
-          return reply;
-        } else {
-          return `With a budget of **${formattedBudget}**, you can easily make an initial deposit on our luxury prime estates like **Town Park & Gardens (Ibeju-Lekki)** or **Eko City (Shimawa)** and spread the remaining balance over **36 flexible monthly installments**!\n\nWould you like to calculate a 36-month payment breakdown or book a free site tour?`;
-        }
-      }
-
-      // 3. Tour Inspection Booking Request
-      if (lower.includes("inspection") || lower.includes("tour") || lower.includes("visit") || lower.includes("tomorrow")) {
-        return "🚌 **Book a Free Site Inspection Tour**\n\nWe organize free physical inspection tours every **Tuesday, Thursday, and Saturday** departing from our Adron Homes offices in Lagos, Ogun, and Abuja!\n\n* **Includes**: Free executive bus seat & guided site walkthrough with an estate consultant.\n\nTo reserve your seat now, please provide your **Full Name**, **Phone Number**, and **Preferred Date**!";
-      }
-
-      // 4. Payment Plan / Installment Calculation Request
-      if (lower.includes("payment") || lower.includes("installment") || lower.includes("36") || lower.includes("how")) {
-        return "💳 **Adron Homes 36-Month Flexible Payment Plan**\n\nWe offer Nigeria's most flexible estate payment structure:\n* 💰 **Daily Equivalent**: Pay as low as **₦2,750 / day**\n* 📅 **Monthly Spread**: Pay equal installments over 12, 24, or 36 months\n* 🔑 **Instant Allocation**: Start building upon initial deposit threshold!\n\nWhich estate location (Lagos, Ogun, Abuja, Oyo) would you like a custom payment breakdown for?";
-      }
-
-      // 5. Default General Catalog Listing for Any Property Prompt
-      let reply = "Here are our current prime **Adron Homes Estates**:\n\n";
-      properties.slice(0, 3).forEach((p) => {
-        const price = p.promoStartingPrice || p.startingPrice;
-        const priceFormatted = new Intl.NumberFormat("en-NG", { style: "currency", currency: "NGN", maximumFractionDigits: 0 }).format(price);
-        reply += `* 🏡 **${p.name}** (${p.location}, ${p.state})\n`;
-        reply += `  - **Starting Price**: ${priceFormatted}\n`;
-        reply += `  - **Title Document**: ${p.titleDocument}\n`;
-        if (p.images && p.images[0]) {
-          reply += `  ![${p.name}](${p.images[0]})\n`;
-        }
-        reply += `\n`;
-      });
-      reply += "Would you like more details on a specific property, plot size (300sqm / 500sqm), or site inspection tour?";
-      return reply;
     }
 
-    return "Hello! Welcome to **Adron Homes & Properties**. I am **AdBot**, your AI Assistant.\n\nI can help you with:\n* 🏡 **Finding Estates**: Lagos, Ogun, Abuja, Oyo\n* 💰 **Promotions**: Ongoing up to 50% discount offers\n* 💳 **Payment Calculator**: Daily & monthly flexible plans\n* 🚌 **Site Inspections**: Booking a free physical tour";
+    // 3. Tour Inspection Booking Request
+    if (lower.includes("inspection") || lower.includes("tour") || lower.includes("visit") || lower.includes("tomorrow")) {
+      return "🚌 **Book a Free Site Inspection Tour**\n\nWe organize free physical inspection tours every **Tuesday, Thursday, and Saturday** departing from our Adron Homes offices in Lagos, Ogun, and Abuja!\n\n* **Includes**: Free executive bus seat & guided site walkthrough with an estate consultant.\n\nTo reserve your seat now, please provide your **Full Name**, **Phone Number**, and **Preferred Date**!";
+    }
+
+    // 4. Payment Plan / Installment Calculation Request
+    if (lower.includes("payment") || lower.includes("installment") || lower.includes("36") || lower.includes("how")) {
+      return "💳 **Adron Homes 36-Month Flexible Payment Plan**\n\nWe offer Nigeria's most flexible estate payment structure:\n* 💰 **Daily Equivalent**: Pay as low as **₦2,750 / day**\n* 📅 **Monthly Spread**: Pay equal installments over 12, 24, or 36 months\n* 🔑 **Instant Allocation**: Start building upon initial deposit threshold!\n\nWhich estate location (Lagos, Ogun, Abuja, Oyo) would you like a custom payment breakdown for?";
+    }
+
+    // 5. Default General Catalog Listing for Any Property Prompt
+    let reply = "Here are our current prime **Adron Homes Estates**:\n\n";
+    properties.slice(0, 3).forEach((p) => {
+      const price = p.promoStartingPrice || p.startingPrice;
+      const priceFormatted = new Intl.NumberFormat("en-NG", { style: "currency", currency: "NGN", maximumFractionDigits: 0 }).format(price);
+      reply += `* 🏡 **${p.name}** (${p.location}, ${p.state})\n`;
+      reply += `  - **Starting Price**: ${priceFormatted}\n`;
+      reply += `  - **Title Document**: ${p.titleDocument}\n`;
+      if (p.images && p.images[0]) {
+        reply += `  ![${p.name}](${p.images[0]})\n`;
+      }
+      reply += `\n`;
+    });
+    reply += "Would you like more details on a specific property, plot size (300sqm / 500sqm), or site inspection tour?";
+    return reply;
   }
 
-  return rawText;
+  return rawText || "Hello! Welcome to **Adron Homes & Properties**. I am **AdBot**, your AI Assistant.";
 }
 
 /**
@@ -184,7 +220,7 @@ export async function sendChatToN8n(payload: N8nChatPayload): Promise<{
 
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 25000); // 25 second timeout
+    const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout for n8n AI agent reasoning & tool execution
 
     const startTime = Date.now();
     const res = await fetch(webhookUrl, {
