@@ -23,7 +23,7 @@ export function ChatWidget({ initialPropertyTitle, initialPropertyId }: ChatWidg
       timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       suggestedActions: initialPropertyTitle
         ? ["Show Payment Breakdown", "Book Inspection", "Title Verification"]
-        : ["What properties are available", "How Payment Plans Work", "Book Free Site Inspection"],
+        : ["What properties are available", "Show properties under ₦20 Million", "How Payment Plans Work", "Book Free Site Inspection"],
     },
   ]);
   const [input, setInput] = useState("");

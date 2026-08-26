@@ -86,7 +86,7 @@ export default function PropertyDetailPage({
         setInspectionDate("");
       }
     } catch (err) {
-      console.error(err);
+      // Submission error fallback
     } finally {
       setIsSubmitting(false);
     }

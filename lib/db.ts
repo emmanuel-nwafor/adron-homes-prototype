@@ -43,11 +43,9 @@ export async function connectToDatabase(): Promise<{
 
   try {
     cached.conn = await cached.promise;
-    console.log(`[MongoDB Atlas] Connected successfully to database: ${cached.conn.connection.name}`);
     return { isConnected: true, dbName: cached.conn.connection.name };
   } catch (e: any) {
     cached.promise = null;
-    console.warn("[MongoDB Atlas] Connection error:", e.message);
     return { isConnected: false, error: e.message };
   }
 }

@@ -5,9 +5,6 @@ export async function POST(request: Request) {
   try {
     const rawBody = await request.json();
 
-    console.log("\n================ [/api/enquiry INCOMING PAYLOAD] ================");
-    console.log(JSON.stringify(rawBody, null, 2));
-
     // Normalize field aliases so requests from n8n or web forms work seamlessly
     const fullName = rawBody.fullName || rawBody.name || rawBody.customerName;
     const phone = rawBody.phone || rawBody.phoneNumber || rawBody.telephone;
@@ -24,7 +21,6 @@ export async function POST(request: Request) {
     const isFromN8n = Boolean(rawBody.type || rawBody.enquiryType);
 
     if (!fullName || !phone) {
-      console.warn("❌ Rejected enquiry: Missing fullName or phone", { fullName, phone });
       return NextResponse.json(
         {
           success: false,
@@ -53,9 +49,6 @@ export async function POST(request: Request) {
 
     const result = await processLeadEnquiry(normalizedPayload);
 
-    console.log("✅ [/api/enquiry SUCCESS]:", result.message);
-    console.log("=================================================================\n");
-
     return NextResponse.json({
       success: true,
       message: result.message,
@@ -74,7 +67,6 @@ export async function POST(request: Request) {
       },
     });
   } catch (error: any) {
-    console.error("❌ Error submitting lead enquiry route:", error);
     return NextResponse.json(
       { success: false, error: "Failed to submit enquiry", details: error?.message || String(error) },
       { status: 500 }

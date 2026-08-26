@@ -15,7 +15,7 @@ export async function processChatRequest(payload: N8nChatPayload) {
         isWebhookResponse: false,
       });
     } catch (err) {
-      console.warn("[MongoDB Atlas] Error saving user message:", err);
+      // Mongo error fallback
     }
   }
 
@@ -32,7 +32,7 @@ export async function processChatRequest(payload: N8nChatPayload) {
         isWebhookResponse: !n8nResult.isMock,
       });
     } catch (err) {
-      console.warn("[MongoDB Atlas] Error saving assistant response:", err);
+      // Mongo error fallback
     }
   }
 
@@ -79,7 +79,6 @@ export async function getChatHistoryBySessionId(sessionId: string) {
       relatedPropertyIds: doc.relatedPropertyIds,
     }));
   } catch (err) {
-    console.warn("[MongoDB Atlas] Error fetching chat history:", err);
     return [];
   }
 }

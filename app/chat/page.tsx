@@ -52,7 +52,7 @@ export default function ChatPage() {
         setMessages(json.messages);
       }
     } catch (err) {
-      console.warn("Could not fetch chat history:", err);
+      // Chat history fallback
     }
   };
 
@@ -106,7 +106,7 @@ export default function ChatPage() {
       };
       setMessages((prev) => [...prev, assistantMsg]);
     } catch (err) {
-      console.error(err);
+      // API error fallback
     } finally {
       setLoading(false);
     }
@@ -234,7 +234,7 @@ export default function ChatPage() {
                 </div>
 
                 {/* Bottom Quick Feature Cards Row */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-3xl w-full pt-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 max-w-4xl w-full pt-2">
                   <button
                     onClick={() => handleSendMessage("What properties are available")}
                     className="p-4 rounded-2xl bg-zinc-100/90 dark:bg-zinc-900/80 hover:bg-zinc-200/90 dark:hover:bg-zinc-800/90 border border-zinc-200 dark:border-zinc-800 text-left space-y-2 transition-all hover:border-emerald-500/40 group cursor-pointer"
@@ -244,6 +244,17 @@ export default function ChatPage() {
                     </div>
                     <h4 className="font-bold text-xs text-zinc-950 dark:text-white">Available Properties</h4>
                     <p className="text-[11px] text-zinc-600 dark:text-zinc-400">View all active land plots and pricing across Nigeria.</p>
+                  </button>
+
+                  <button
+                    onClick={() => handleSendMessage("Show properties under ₦20 Million")}
+                    className="p-4 rounded-2xl bg-zinc-100/90 dark:bg-zinc-900/80 hover:bg-zinc-200/90 dark:hover:bg-zinc-800/90 border border-zinc-200 dark:border-zinc-800 text-left space-y-2 transition-all hover:border-emerald-500/40 group cursor-pointer"
+                  >
+                    <div className="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <Building2 className="w-4 h-4" />
+                    </div>
+                    <h4 className="font-bold text-xs text-zinc-950 dark:text-white">Under ₦20 Million</h4>
+                    <p className="text-[11px] text-zinc-600 dark:text-zinc-400">Find verified land plots matching budget limits.</p>
                   </button>
 
                   <button
@@ -360,8 +371,15 @@ export default function ChatPage() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => handleSendMessage("Tell me more about 300sqm plot")}
+                      onClick={() => handleSendMessage("Show properties under ₦20 Million")}
                       className="text-[11px] bg-zinc-200/80 dark:bg-zinc-800/80 hover:bg-zinc-300/80 dark:hover:bg-zinc-700/80 text-zinc-800 dark:text-zinc-300 px-2.5 py-1 rounded-xl transition-colors font-medium flex items-center gap-1 cursor-pointer"
+                    >
+                      💰 Under ₦20M
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleSendMessage("Tell me more about 300sqm plot")}
+                      className="text-[11px] bg-zinc-200/80 dark:bg-zinc-800/80 hover:bg-zinc-300/80 dark:hover:bg-zinc-700/80 text-zinc-800 dark:text-zinc-300 px-2.5 py-1 rounded-xl transition-colors font-medium flex items-center gap-1 cursor-pointer hidden md:flex"
                     >
                       📐 300sqm Details
                     </button>

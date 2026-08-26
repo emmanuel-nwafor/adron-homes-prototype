@@ -64,8 +64,6 @@ async function extractHumanText(parsedData: any, rawText: string, userMessage?: 
     }
 
     // If n8n returned {"success": true, "sessionId": "..."} without any text field
-    console.warn("⚠️ n8n webhook returned JSON with null/empty response field:", parsedData);
-
     // Generate intelligent live real-estate answer based on user prompt!
     if (userMessage) {
       const budget = parseBudgetFromMessage(userMessage);
@@ -168,7 +166,6 @@ export async function sendChatToN8n(payload: N8nChatPayload): Promise<{
   const webhookUrl = process.env.N8N_WEBHOOK_URL;
 
   if (!webhookUrl || webhookUrl.trim() === "") {
-    console.error("❌ ERROR: N8N_WEBHOOK_URL environment variable is not defined in .env.local!");
     return {
       response: {
         output: "⚠️ **Configuration Error**: `N8N_WEBHOOK_URL` is not defined in `.env.local`. Please configure your environment variable.",
@@ -185,10 +182,6 @@ export async function sendChatToN8n(payload: N8nChatPayload): Promise<{
     sessionId: payload.sessionId || `session_${Date.now()}`,
   };
 
-  console.log("\n================ [N8N CHAT DISPATCH START] ================");
-  console.log("🚀 TARGET WEBHOOK URL (from env):", webhookUrl);
-  console.log("📦 PAYLOAD SENT TO WEBHOOK:", JSON.stringify(sanitizedPayload, null, 2));
-
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 25000); // 25 second timeout
@@ -204,11 +197,6 @@ export async function sendChatToN8n(payload: N8nChatPayload): Promise<{
 
     const elapsedTime = Date.now() - startTime;
     const resText = await res.text();
-
-    console.log(`📥 WEBHOOK RESPONSE RECEIVED (${elapsedTime}ms):`);
-    console.log(`STATUS CODE: ${res.status} ${res.statusText}`);
-    console.log(`RAW RESPONSE BODY:`, resText);
-    console.log("================ [N8N CHAT DISPATCH END] ==================\n");
 
     let parsedData: any = null;
     try {
@@ -249,15 +237,12 @@ export async function sendChatToN8n(payload: N8nChatPayload): Promise<{
       };
     }
   } catch (error: any) {
-    console.error("❌ WEBHOOK FETCH ERROR:", error?.message || error);
-    console.log("================ [N8N CHAT DISPATCH END] ==================\n");
-
     const fallbackText = await extractHumanText(null, "", payload.message);
 
     return {
       response: {
         output: fallbackText,
-        suggestedActions: ["Estates under ₦5 Million", "How Payment Plans Work", "Book Free Inspection"],
+        suggestedActions: ["What properties are available", "Show properties under ₦20 Million", "How Payment Plans Work", "Book Free Inspection"],
       },
       isMock: false,
       n8nUrlUsed: webhookUrl,
@@ -306,10 +291,6 @@ export async function sendEnquiryToN8n(payload: EnquiryPayload & { sessionId?: s
     message: payload.message || "Property enquiry submission",
   };
 
-  console.log("\n================ [N8N ENQUIRY DISPATCH START] ================");
-  console.log("🚀 TARGET WEBHOOK URL (from env):", webhookUrl);
-  console.log("📦 PAYLOAD SENT TO WEBHOOK:", JSON.stringify(enquiryBody, null, 2));
-
   try {
     const res = await fetch(webhookUrl, {
       method: "POST",
@@ -318,9 +299,6 @@ export async function sendEnquiryToN8n(payload: EnquiryPayload & { sessionId?: s
     });
 
     const resText = await res.text();
-    console.log(`📥 ENQUIRY WEBHOOK STATUS: ${res.status} ${res.statusText}`);
-    console.log(`RAW RESPONSE BODY:`, resText);
-    console.log("================ [N8N ENQUIRY DISPATCH END] ==================\n");
 
     return {
       success: res.ok,
@@ -332,9 +310,6 @@ export async function sendEnquiryToN8n(payload: EnquiryPayload & { sessionId?: s
       rawResponse: resText,
     };
   } catch (err: any) {
-    console.error("❌ LEAD WEBHOOK ERROR:", err?.message || err);
-    console.log("================ [N8N ENQUIRY DISPATCH END] ==================\n");
-
     return {
       success: false,
       message: `Lead Webhook Error: ${err?.message || "Fetch Failed"}`,

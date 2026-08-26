@@ -74,7 +74,7 @@ export function SubscribeModal({ property, isOpen, onClose }: SubscribeModalProp
         }, 2500);
       }
     } catch (err) {
-      console.error(err);
+      // Subscription error fallback
     } finally {
       setIsSubmitting(false);
     }

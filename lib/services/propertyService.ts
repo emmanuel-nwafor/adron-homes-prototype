@@ -18,7 +18,6 @@ export async function fetchAllProperties(filters?: {
       // Auto-seed initial catalog into MongoDB if empty
       const count = await PropertyModel.countDocuments();
       if (count === 0) {
-        console.log("[MongoDB Atlas] Auto-seeding property catalog into database...");
         await PropertyModel.insertMany(
           ADRON_PROPERTIES.map((p) => ({
             ...p,
@@ -88,7 +87,7 @@ export async function fetchAllProperties(filters?: {
 
       return { properties, isMongoDb: true };
     } catch (err) {
-      console.warn("[MongoDB Atlas] Query error, falling back to local dataset:", err);
+      // Local fallback
     }
   }
 
@@ -159,7 +158,7 @@ export async function fetchPropertyById(id: string): Promise<Property | undefine
         };
       }
     } catch (err) {
-      console.warn("[MongoDB Atlas] Error fetching property by ID:", err);
+      // Local fallback
     }
   }
 

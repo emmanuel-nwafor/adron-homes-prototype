@@ -60,7 +60,7 @@ export function EnquiryModal({ property, isOpen, onClose }: EnquiryModalProps) {
         }, 3000);
       }
     } catch (err) {
-      console.error(err);
+      // Enquiry error fallback
     } finally {
       setIsSubmitting(false);
     }
